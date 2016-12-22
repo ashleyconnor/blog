@@ -70,4 +70,7 @@ include: ["_pages"]
 exclude:
   - Gemfile
   - Gemfile.lock
+  - s3_website.yml
+  - _pages
+  - plugins
   - vendor
