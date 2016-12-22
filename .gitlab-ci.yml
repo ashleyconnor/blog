@@ -17,7 +17,9 @@ build:
 
 deploy:
   stage: deploy
+  script:
+    - bundle exec s3_website push
   artifacts:
     paths:
       - public
-    when: manual
+  when: manual
