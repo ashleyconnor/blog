@@ -16,10 +16,15 @@ build:
       - public
 
 deploy:
+  variables:
+    CI_DEBUG_TRACE: "true"
   stage: deploy
   script:
+    - export
     - bundle exec s3_website push
   artifacts:
     paths:
       - public
   when: manual
+  only:
+    - master
