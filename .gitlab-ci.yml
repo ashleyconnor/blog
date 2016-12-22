@@ -1,0 +1,23 @@
+image: codequest/ruby-golang-java-nodejs:latest
+
+cache:
+  paths: 
+    - vendor/
+
+before_script:
+  - bundle install --path vendor
+
+build:
+  stage: build
+  script:
+    - JEKYLL_ENV=production bundle exec jekyll build -d public/
+  artifacts:
+    paths:
+      - public
+
+deploy:
+  stage: deploy
+  artifacts:
+    paths:
+      - public
+    when: manual
