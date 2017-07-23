@@ -299,13 +299,13 @@ production:
 
 Notice that the `host` entry is populated with our container name `db`.
 
-The run the Postgres container like so:
+Then run the Postgres container like so:
 
 {% highlight bash %}
 $ docker run -it --net=my-network --name=db postgres:9.6
 {% endhighlight %}
 
-And we can run the rails server too:
+We can run the rails server on the same network:
 
 {% highlight bash %}
 $ docker run -itP -v $(pwd):/app --net=my-network --name=rails myapp bin/rails server
@@ -313,7 +313,7 @@ $ docker run -itP -v $(pwd):/app --net=my-network --name=rails myapp bin/rails s
 
 If you get an error like `docker: Error response from daemon: Conflict. The container name "/rails" is already in use.` simply remove the container using the name by running `docker rm $containerId` - where $containerId is the ID output in the error.
 
-Both containers are running, but since we don't have any database specific code in our application, let's just create the databases in Postgres via rake to confirm that things are working.
+Both containers are now running, but since we don't have any database specific code in our application, let's just create the empty databases in Postgres via rake to confirm that things are working.
 
 {% highlight bash %}
 $ docker run -it --net=my-network myapp bin/rake db:create
@@ -326,11 +326,11 @@ It works!
 
 ## docker-compose
 
-It can be tedious to manually run multiple commands in different terminals to get containers to communicate together. Luckily there's a better way. Enter docker-compose.
+It can be tedious to manually run multiple commands in different terminals in order to get containers to communicate together. Luckily there's a better way. Enter docker-compose.
 
-Docker compose allows us to create a single file which tells docker how we want are containers to connect togther.
+Docker compose allows us to create a single configuration file describing how we want our containers to be wired togther.
 
-Let's get started. Create a `docker-compose.yml` file in the same directory as your Dockerfile.
+To do this, create a `docker-compose.yml` file in the same directory as your Dockerfile.
 
 {% highlight yml %}
 version: '3'
@@ -352,17 +352,17 @@ services:
 
 Let's look at what we have specified under the `services` key.
 
-First we specify our container name `db` and what image it should use. This is followed by a volumes array which contains only one volume. This maps Postgres' data volume to the host directory `data/postgres`.
+First, we specify our container name `db` and what image it should use. This is followed by a volumes array which contains only one volume. This maps Postgres' data volume to the host directory `data/postgres`.
 
-We do this to prevent the Postgres container from losing all of its data when the container restarts.
+We do this to prevent the Postgres container from losing all of its stored data when the container restarts.
 
-Next is the web container. This is pretty much the same as it was before with the exception of mapping port 3000 on the host to 3000 on the container. No more `docker ps` to find out what port our app is running on. It will always be [http://localhost:3000](http://localhost:3000).
+Next is the web container, this is pretty much the same as it was before with the exception of a mapping of port 3000 on the host, to 3000 on the container. No more `docker ps` to find out what port our app is running on. It will always be [http://localhost:3000](http://localhost:3000).
 
 ![Back to port 3000](/assets/images/docker/new_controller.png)
 
 Finally, we add a dependency on `db` which takes care of the connectivity between the two containers.
 
-Let's run our docker-compose file:
+Now we can run our docker-compose file:
 
 {% highlight bash %}
 $ docker-compose up
@@ -455,8 +455,8 @@ We've seen how to run one-off tasks using docker. So here's a few commands I've 
 
 ## Resources
 
-First draft. Will be updated again shortly.
-
 - [Running a Rails Development Environment in Docker](https://blog.codeship.com/running-rails-development-environment-docker/)
 - [Connecting docker containers](https://blog.csainty.com/2016/07/connecting-docker-containers.html)
 - [Docker docs](https://docs.docker.com)
+
+Feel free to Tweet any technical or grammatical errors to me [@ashconnor](https://twitter.com/ashconnor)

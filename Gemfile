@@ -15,8 +15,6 @@ gem "jekyll", "3.3.1"
 # Useful shortcuts - see README.md
 gem 'jekyll-compose', group: [:jekyll_plugins]
 
-# Use latest rogue for better highlighting support
-
 # This is the default theme for new Jekyll sites. You may change this to anything you like.
 gem "minima", "~> 2.0"
 
