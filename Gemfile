@@ -1,4 +1,4 @@
-source "https://rubygems.org"
+ source "https://rubygems.org"
 ruby RUBY_VERSION
 
 # Hello! This is where you manage which Jekyll version is used to run.
@@ -9,7 +9,7 @@ ruby RUBY_VERSION
 #
 # This will help ensure the proper Jekyll version is running.
 # Happy Jekylling!
-gem "jekyll", :git => "git@github.com:jekyll/jekyll.git", :branch => "rouge-1-and-2"
+gem "jekyll", "3.3.1"
 
 
 # Useful shortcuts - see README.md
