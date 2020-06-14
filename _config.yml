@@ -41,7 +41,7 @@ author:
   avatar : "/assets/images/avatar.jpg"
   email  : # optional
   uri    : https://ashleyconnor.co.uk
-  twitter: ashconnor
+  twitter: AshleyPConnor
   reddit : ashconnor
   github : ashleyconnor
   keybase: ashconnor
@@ -51,7 +51,7 @@ author:
 
 # Social Sharing
 twitter:
-  username               : &twitter "ashconnor"
+  username               : &twitter "AshleyPConnor"
 # facebook:
 #   username               : &facebook "ashleyconnor"
 #   app_id                 :

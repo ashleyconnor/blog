@@ -1,7 +1,7 @@
 image: codequest/ruby-golang-java-nodejs:latest
 
 cache:
-  paths: 
+  paths:
     - vendor/
 
 before_script:

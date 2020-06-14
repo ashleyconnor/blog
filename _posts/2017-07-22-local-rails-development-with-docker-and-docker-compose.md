@@ -48,7 +48,7 @@ Open this new file with your favourite text editor and add the following lines:
 
 {% highlight dockerfile %}
 FROM ruby:2.3-alpine
-MAINTAINER ashconnor@me.com
+MAINTAINER me@ashleyconnor.co.uk
 {% endhighlight %}
 
 `FROM` specifies which Base Image we want to build from. I've chosen the `ruby` image version `2.3-alpine`. `2.3` is the ruby language version and `alpine` refers to [Alpine Linux](https://alpinelinux.org/) which is a lean Linux distribution that helps keep our Docker images small.
@@ -108,7 +108,7 @@ $ docker build --tag myapp .
 Sending build context to Docker daemon  148.5kB
 Step 1/12 : FROM ruby:2.4-alpine
  ---> 3ac55aa07ac8
-Step 2/12 : MAINTAINER ashconnor@rublix.com
+Step 2/12 : MAINTAINER me@ashleyconnor.co.uk
 Step 3/12 : ENV DEV_PACKAGES "ruby-dev build-base zlib-dev libxml2-dev libxslt-dev tzdata yaml-dev sqlite-dev" RAILS_PACKAGES "nodejs"
 Removing intermediate container 43f551d6e757
 Step 4/12 : RUN apk --update --upgrade add $RAILS_PACKAGES $DEV_PACKAGES
@@ -459,4 +459,4 @@ We've seen how to run one-off tasks using docker. So here's a few commands I've 
 - [Connecting docker containers](https://blog.csainty.com/2016/07/connecting-docker-containers.html)
 - [Docker docs](https://docs.docker.com)
 
-Feel free to Tweet any technical or grammatical errors to me [@ashconnor](https://twitter.com/ashconnor)
+Feel free to Tweet any technical or grammatical errors to me [@AshleyPConnor](https://twitter.com/AshleyPConnor)

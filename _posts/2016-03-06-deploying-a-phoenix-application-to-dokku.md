@@ -101,7 +101,7 @@ We need a combination of 2 buildpacks in order to deploy our application. One fo
 https://github.com/HashNuke/heroku-buildpack-elixir.git
 https://github.com/gjaldon/heroku-buildpack-phoenix-static.git
 
-{% endhighlight %}    
+{% endhighlight %}
 
 We then configure our `phoenix-static` buildpack to use a later version of Node required by Phoenix 1.1 and above.
 
@@ -263,4 +263,4 @@ Now we can visit our site securely at [https://phoenix.mydomain.com](https://pho
 
 ![SSL Certificate](https://www.dropbox.com/s/qx9d7h0sg3uziij/Screenshot%202016-03-06%2011.57.52.png?dl=1)
 
-If you have any questions or spot an error just send me a tweet [@ashconnor](https://twitter.com/ashconnor)
+If you have any questions or spot an error just send me a tweet [@AshleyPConnor](https://twitter.com/AshleyPConnor)
