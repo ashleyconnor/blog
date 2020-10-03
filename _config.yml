@@ -39,19 +39,19 @@ paginate_path: /page:num/
 author:
   name   : "Ashley Connor"
   avatar : "/assets/images/avatar.jpg"
-  email  : # optional
+  email  : me [at] ashleyconnor.co.uk
   uri    : https://ashleyconnor.co.uk
-  twitter: AshleyPConnor
+  twitter: ashconnor
   reddit : ashconnor
   github : ashleyconnor
   keybase: ashconnor
   location: Toronto, Canada
   stackoverflow: 196834/ash
-  linkedin: ashleyconnor
+  # linkedin: ashleyconnor
 
 # Social Sharing
 twitter:
-  username               : &twitter "AshleyPConnor"
+  username               : &twitter "ashconnor"
 # facebook:
 #   username               : &facebook "ashleyconnor"
 #   app_id                 :
