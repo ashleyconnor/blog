@@ -14,7 +14,7 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 title: Ashley Connor
-email: ashconnor@me.com
+email: me@ashleyconnor.co.uk
 description: > # this means to ignore newlines until "baseurl:"
   The idle thoughts of a rambling developer.
 baseurl: "" # the subpath of your site, e.g. /blog/
@@ -39,11 +39,10 @@ paginate_path: /page:num/
 author:
   name   : "Ashley Connor"
   avatar : "/assets/images/avatar.jpg"
-  email  : me [at] ashleyconnor.co.uk
-  uri    : https://ashleyconnor.co.uk
+  email  : me@ashleyconnor.co.uk
   twitter: ashconnor
-  reddit : ashconnor
   github : ashleyconnor
+  linkedin: ashleyconnor
   location: Toronto, Canada
   stackoverflow: 196834/ash
 
