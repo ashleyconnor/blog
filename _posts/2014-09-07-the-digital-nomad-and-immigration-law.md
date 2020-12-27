@@ -5,6 +5,7 @@ redirect_from:
   - "blog/2014/09/07/the-digital-nomad-and-immigration-law/"
   - "blog/2014/09/07/working-in-thailand-as-a-digital-nomad/"
 excerpt: Becoming a **digital nomad** these days is easier than ever but comes with some major caveats...
+hide: true
 ---
 
 Becoming a **digital nomad** these days is easier than ever. With the increasing prevalence of high-speed internet, cheap air travel and the willingness of companies to do business with remote workers, it's possible to travel the globe whilst doing the work you love.
