@@ -31,7 +31,7 @@ defaults:
       author_profile: true
       read_time: true
       share: true
-
+      show_date: true
 words_per_minute: 200
 paginate: 5 # amount of posts to show
 paginate_path: /page:num/
@@ -67,7 +67,6 @@ include: ["_pages"]
 exclude:
   - Gemfile
   - Gemfile.lock
-  - s3_website.yml
   - _pages
   - plugins
   - vendor
