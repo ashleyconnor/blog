@@ -459,4 +459,4 @@ We've seen how to run one-off tasks using docker. So here's a few commands I've 
 - [Connecting docker containers](https://blog.csainty.com/2016/07/connecting-docker-containers.html)
 - [Docker docs](https://docs.docker.com)
 
-Feel free to Tweet any technical or grammatical errors to me [@AshleyPConnor](https://twitter.com/AshleyPConnor)
+Feel free to Tweet any errors to me [@ashconnor](https://twitter.com/ashconnor)
