@@ -25,13 +25,13 @@ $ brew install mkcert
 If you intend to use Firefox, you should also install [`nss`](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS).
 
 ```bash
-brew install nss
+$ brew install nss
 ```
 
 Next run `mkcert` and pass in the the domain names and IPs you want the certificate to include:
 
 ```bash
-mkcert mywebsite.test localhost 127.0.0.1 ::1
+$ mkcert mywebsite.test localhost 127.0.0.1 ::1
 
 Created a new certificate valid for the following names 📜
  - "mywebsite.test"
@@ -51,7 +51,7 @@ It will expire on 7 September 2023
 After the certificates are generated we can install the local [CA](https://en.wikipedia.org/wiki/Certificate_authority) by running `mkcert` with the install flag. This only needs to be done once as this CA will be used to sign all future certificates generated with `mkcert`.
 
 ```bash
-mkcert -install
+$ mkcert -install
 ```
 
 If this is you first time installing certificates using `mkcert` you should see the following output:
@@ -67,13 +67,13 @@ At this point your can use your generated certificates with your development ser
 ### Flask
 
 ```bash
-flask run --cert=mywebsite.test+3.pem --key=mywebsite.test+3-key.pem
+$ flask run --cert=mywebsite.test+3.pem --key=mywebsite.test+3-key.pem
 ```
 
 ### Rails
 
 ```bash
-rails s -b 'ssl://127.0.0.1:3000?key=mywebsite.test+3-key.pem&cert=mywebsite.test+3.pem'
+$ rails s -b 'ssl://127.0.0.1:3000?key=mywebsite.test+3-key.pem&cert=mywebsite.test+3.pem'
 ```
 
 ## WSL2
@@ -85,7 +85,7 @@ First we want to install `mkcert` on Windows which we can do using [`chocolatey`
 Open a Powershell terminal using the [administrator user](https://adamtheautomator.com/wp-content/uploads/2020/11/FromSearch-1.png) and run:
 
 ```powershell
-choco install mkcert
+$ choco install mkcert
 ```
 
 Then run `mkcert` with the install flag like we did before:
@@ -95,7 +95,7 @@ Then run `mkcert` with the install flag like we did before:
 # you can get this directory by running mkcert -CAROOT from a WSL2 terminal
 # if we don't do this it will install a different root CA and we will get warnings
 $CAROOT="\\wsl$\Ubuntu\home\ashley\.local\share\mkcert\"
-mkcert -install
+$ mkcert -install
 The local CA is now installed in the system trust store! ⚡️
 Note: Firefox support is not available on your platform. ℹ️
 ```
