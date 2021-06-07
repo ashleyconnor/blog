@@ -1,14 +1,15 @@
 ---
 title: Local Rails Development with Docker and Docker Compose
+excerpt: This is just a quick overview of using Docker and Docker Compose to spin up a solid development environment.
 ---
 
 This is just a quick overview of using Docker and Docker Compose to spin up a solid development environment.
 
 ### Assumptions
 
-* You're using OSX
-* You have [Docker for OSX](https://www.docker.com/community-edition#/download) installed
-* You have ruby and the rails 5.0+ gem installed
+- You're using OSX
+- You have [Docker for OSX](https://www.docker.com/community-edition#/download) installed
+- You have ruby and the rails 5.0+ gem installed
 
 That said, this should work on both Linux and Windows without any issues.
 
@@ -20,19 +21,20 @@ First we need a rails application to test our Docker environment with, so run `r
 $ rails new myapp
 
 create
-create  README.md
-create  Rakefile
-create  config.ru
-create  .gitignore
-create  Gemfile
-run  git init from "." Initialized empty Git repository in /Users/ashleyconnor/Sandbox/docker/rails/myapp/.git/
-create  app
+create README.md
+create Rakefile
+create config.ru
+create .gitignore
+create Gemfile
+run git init from "." Initialized empty Git repository in /Users/ashleyconnor/Sandbox/docker/rails/myapp/.git/
+create app
 #... more output, truncated for brevity
 Bundle complete! 16 Gemfile dependencies, 70 gems now installed.
 Use `bundle info [gemname]` to see where a bundled gem is installed.
-         run  bundle exec spring binstub --all
-* bin/rake: spring inserted
-* bin/rails: spring inserted
+run bundle exec spring binstub --all
+
+- bin/rake: spring inserted
+- bin/rails: spring inserted
 
 $ cd myapp
 
@@ -59,13 +61,13 @@ Next we need to install some dependecies that will help us install rails gems th
 
 {% highlight dockerfile %}
 ENV DEV_PACKAGES="build-base ruby-dev zlib-dev libxml2-dev libxslt-dev tzdata yaml-dev sqlite-dev" \
-    RAILS_PACKAGES="nodejs"
+ RAILS_PACKAGES="nodejs"
 
 RUN apk --update --upgrade add $RAILS_PACKAGES $DEV_PACKAGES
 {% endhighlight %}
 
-* `ENV` sets environment variables (*key=value*) which we can use in later instructions or the container itself
-* `RUN` allows us to run any command. Here we are using Alpine Linux's dependency managment tool `apk` (similar to `apt` and `yum` on other distros) to install our required packages
+- `ENV` sets environment variables (_key=value_) which we can use in later instructions or the container itself
+- `RUN` allows us to run any command. Here we are using Alpine Linux's dependency managment tool `apk` (similar to `apt` and `yum` on other distros) to install our required packages
 
 Next we create our working directories and copy in our Gemfile so we can install our project's dependencies:
 
@@ -81,11 +83,11 @@ COPY . ./
 
 There are several instructions here so let's break it down:
 
-* First we are creating an `app` directory that will hold our rails project
-* `WORKDIR` sets up the working directory for any instructions that follow
-* `COPY` copy our Gemfiles from our host's current directory to the working directory of our container
-* Then we install `bundler` and all our gems
-* Finally - we copy over our entire current directory and place the files in the Docker image's work directory
+- First we are creating an `app` directory that will hold our rails project
+- `WORKDIR` sets up the working directory for any instructions that follow
+- `COPY` copy our Gemfiles from our host's current directory to the working directory of our container
+- Then we install `bundler` and all our gems
+- Finally - we copy over our entire current directory and place the files in the Docker image's work directory
 
 We finish our Dockerfile adding these two lines:
 
@@ -95,8 +97,8 @@ EXPOSE 3000
 CMD ["bin/rails", "server", "-b", "0.0.0.0"]
 {% endhighlight %}
 
-* `EXPOSE` informs Docker that the container is listening for requests on the specified port, this port is not yet accessible by the host
-* There can only be one `CMD` entry per Dockerfile which is the default unless it is overridden
+- `EXPOSE` informs Docker that the container is listening for requests on the specified port, this port is not yet accessible by the host
+- There can only be one `CMD` entry per Dockerfile which is the default unless it is overridden
 
 ## Building the Docker image
 
@@ -105,9 +107,9 @@ We can now build our image:
 {% highlight bash %}
 
 $ docker build --tag myapp .
-Sending build context to Docker daemon  148.5kB
+Sending build context to Docker daemon 148.5kB
 Step 1/12 : FROM ruby:2.4-alpine
- ---> 3ac55aa07ac8
+---> 3ac55aa07ac8
 Step 2/12 : MAINTAINER me@ashleyconnor.co.uk
 Step 3/12 : ENV DEV_PACKAGES "ruby-dev build-base zlib-dev libxml2-dev libxslt-dev tzdata yaml-dev sqlite-dev" RAILS_PACKAGES "nodejs"
 Removing intermediate container 43f551d6e757
@@ -143,12 +145,13 @@ $ docker run -it myapp "bin/rails server"
 => Rails 5.1.2 application starting in development on http://localhost:3000
 => Run `rails server -h` for more startup options
 Puma starting in single mode...
-* Version 3.9.1 (ruby 2.4.1-p111), codename: Private Caller
-* Min threads: 5, max threads: 5
-* Environment: development
-* Listening on tcp://0.0.0.0:3000
-Use Ctrl-C to stop
-{% endhighlight %}
+
+- Version 3.9.1 (ruby 2.4.1-p111), codename: Private Caller
+- Min threads: 5, max threads: 5
+- Environment: development
+- Listening on tcp://0.0.0.0:3000
+  Use Ctrl-C to stop
+  {% endhighlight %}
 
 However if we attempt to connect to the container [http://localhost:3000](http://localhost:3000) it won't work because we haven't mapped the container's port to a port on our host.
 
@@ -163,8 +166,8 @@ The `P` flag binds the exposed ports on the container to random unpriviledged po
 {% highlight bash %}
 $ docker ps
 
-CONTAINER ID        IMAGE                          COMMAND                  CREATED             STATUS              PORTS                     NAMES
-3a72e6eb6325        myapp                          "bundle exec 'bin/..."   2 minutes ago       Up 2 minutes        0.0.0.0:32776->3000/tcp   awesome_golick
+CONTAINER ID IMAGE COMMAND CREATED STATUS PORTS NAMES
+3a72e6eb6325 myapp "bundle exec 'bin/..." 2 minutes ago Up 2 minutes 0.0.0.0:32776->3000/tcp awesome_golick
 {% endhighlight %}
 
 Here we can see our myapp container port 3000 has mapped to our host port 32776. So if we visit [http://localhost:32776](http://localhost:32776) we can see the rails default home.
@@ -180,21 +183,21 @@ You may be tempted to run a `rails g` command from your host, but we can run one
 {% highlight bash %}
 $ docker run -it myapp bin/rails generate controller Welcome index
 Running via Spring preloader in process 24
-      create  /controllers/welcome_controller.rb
-       route  get 'welcome/index'
-      invoke  erb
-      create    /views/welcome
-      create    /views/welcome/index.html.erb
-      invoke  test_unit
-      create    test/controllers/welcome_controller_test.rb
-      invoke  helper
-      create    /helpers/welcome_helper.rb
-      invoke    test_unit
-      invoke  assets
-      invoke    coffee
-      create      /assets/javascripts/welcome.coffee
-      invoke    scss
-      create      /assets/stylesheets/welcome.scss
+create /controllers/welcome_controller.rb
+route get 'welcome/index'
+invoke erb
+create /views/welcome
+create /views/welcome/index.html.erb
+invoke test_unit
+create test/controllers/welcome_controller_test.rb
+invoke helper
+create /helpers/welcome_helper.rb
+invoke test_unit
+invoke assets
+invoke coffee
+create /assets/javascripts/welcome.coffee
+invoke scss
+create /assets/stylesheets/welcome.scss
 {% endhighlight %}
 
 After this command has finished, the container terminates.
@@ -205,28 +208,28 @@ If we `ls` myapp's `app/controller` directory we would expect to find a file cal
 
 This is because we've yet to setup a shared filesystem between our host and container. So any modifications we make to the filesystem in our container are disgarded when the container terminates.
 
-To fix this we can use a Docker concept called `volumes`, which is a way to "mount" a host (or another container)  directory to your container.
+To fix this we can use a Docker concept called `volumes`, which is a way to "mount" a host (or another container) directory to your container.
 
 Let's try this with our `myapp` container:
 
 {% highlight bash %}
 $ docker run -itP -v $(pwd):/app myapp bin/rails generate controller Welcome index
 Running via Spring preloader in process 24
-      create  /controllers/welcome_controller.rb
-       route  get 'welcome/index'
-      invoke  erb
-      create    /views/welcome
-      create    /views/welcome/index.html.erb
-      invoke  test_unit
-      create    test/controllers/welcome_controller_test.rb
-      invoke  helper
-      create    /helpers/welcome_helper.rb
-      invoke    test_unit
-      invoke  assets
-      invoke    coffee
-      create      /assets/javascripts/welcome.coffee
-      invoke    scss
-      create      /assets/stylesheets/welcome.scss
+create /controllers/welcome_controller.rb
+route get 'welcome/index'
+invoke erb
+create /views/welcome
+create /views/welcome/index.html.erb
+invoke test_unit
+create test/controllers/welcome_controller_test.rb
+invoke helper
+create /helpers/welcome_helper.rb
+invoke test_unit
+invoke assets
+invoke coffee
+create /assets/javascripts/welcome.coffee
+invoke scss
+create /assets/stylesheets/welcome.scss
 {% endhighlight %}
 
 The important difference here is: `-v $(pwd):/app` - which tells docker to mount the current working directory to a folder on the container at `/app`.
@@ -237,7 +240,7 @@ Let's edit the application's `routes.rb` to use our new Welcome Controller.
 
 {% highlight ruby %}
 Rails.application.routes.draw do
-  root 'welcome#index'
+root 'welcome#index'
 end
 {% endhighlight %}
 
@@ -276,24 +279,24 @@ Finally, let's modify our application's `config/database.yml` file to use postgr
 
 {% highlight yml %}
 default: &default
-  adapter: postgresql
-  encoding: unicode
-  host: db
-  username: postgres
-  password:
-  pool: 5
+adapter: postgresql
+encoding: unicode
+host: db
+username: postgres
+password:
+pool: 5
 
 development:
-  <<: *default
-  database: myapp_development
+<<: \*default
+database: myapp_development
 
 test:
-  <<: *default
-  database: myapp_test
+<<: \*default
+database: myapp_test
 
 production:
-  <<: *default
-  database: myapp
+<<: \*default
+database: myapp
 
 {% endhighlight %}
 
@@ -335,19 +338,15 @@ To do this, create a `docker-compose.yml` file in the same directory as your Doc
 {% highlight yml %}
 version: '3'
 services:
-  db:
-    image: postgres:9.6
-    volumes:
-       - ./data/postgresql:/var/lib/postgresql/data
-  web:
-    build: .
-    command: bin/rails server -p 3000 -b '0.0.0.0' # this is redundant as it the container's default command
-    volumes:
-      - .:/app
-    ports:
-      - "3000:3000"
-    depends_on:
-      - db
+db:
+image: postgres:9.6
+volumes: - ./data/postgresql:/var/lib/postgresql/data
+web:
+build: .
+command: bin/rails server -p 3000 -b '0.0.0.0' # this is redundant as it the container's default command
+volumes: - .:/app
+ports: - "3000:3000"
+depends_on: - db
 {% endhighlight %}
 
 Let's look at what we have specified under the `services` key.
@@ -368,16 +367,18 @@ Now we can run our docker-compose file:
 $ docker-compose up
 Creating network "myapp_default" with the default driver
 Building web
+
 # build output omitted
-db_1   | selecting default max_connections ... 100
-db_1   | selecting default shared_buffers ... 128MB
-db_1   | selecting dynamic shared memory implementation ... posix
-db_1   | creating configuration files ... ok
-db_1   | running bootstrap script ... ok
-web_1  | => Booting Puma
-web_1  | => Rails 5.1.2 application starting in development on http://0.0.0.0:3000
-web_1  | => Run `rails server -h` for more startup options
-web_1  | Puma starting in single mode...
+
+db_1 | selecting default max_connections ... 100
+db_1 | selecting default shared_buffers ... 128MB
+db_1 | selecting dynamic shared memory implementation ... posix
+db_1 | creating configuration files ... ok
+db_1 | running bootstrap script ... ok
+web_1 | => Booting Puma
+web_1 | => Rails 5.1.2 application starting in development on http://0.0.0.0:3000
+web_1 | => Run `rails server -h` for more startup options
+web_1 | Puma starting in single mode...
 {% endhighlight %}
 
 Docker compose has built our image and is now running that image along with a Postgres container, linking them both together. We can see the output streaming from containers in the console.
@@ -403,42 +404,37 @@ With that said, let's expand our docker-compose file to make use of redis:
 {% highlight yml %}
 version: '3'
 services:
-  db:
-    image: postgres:9.6
-    volumes:
-       - ./data/postgresql:/var/lib/postgresql/data
-  redis:
-    image: redis:3.2
-  web:
-    build: .
-    command: bin/rails server -p 3000 -b '0.0.0.0'
-    volumes:
-      - .:/app
-    ports:
-      - "3000:3000"
-    depends_on:
-      - db
-      - redis
+db:
+image: postgres:9.6
+volumes: - ./data/postgresql:/var/lib/postgresql/data
+redis:
+image: redis:3.2
+web:
+build: .
+command: bin/rails server -p 3000 -b '0.0.0.0'
+volumes: - .:/app
+ports: - "3000:3000"
+depends_on: - db - redis
 {% endhighlight %}
 
 We need to make one change in our `config/cable.yml` to connect to redis:
 
 {% highlight yml %}
 default: &default
-  adapter: redis
-  url: redis://redis:6379/1
+adapter: redis
+url: redis://redis:6379/1
 
 development:
-  <<: *default
-  channel_prefix: myapp_development
+<<: \*default
+channel_prefix: myapp_development
 
 test:
-  <<: *default
-  channel_prefix: myapp_test
+<<: \*default
+channel_prefix: myapp_test
 
 production:
-  <<: *default
-  channel_prefix: myapp_production
+<<: \*default
+channel_prefix: myapp_production
 {% endhighlight %}
 
 Now if we run `$ docker-compose up` we will see redis also booting - along side our app and database.
@@ -449,9 +445,9 @@ That's it! See how easy it is to add new services to our application?
 
 We've seen how to run one-off tasks using docker. So here's a few commands I've found useful:
 
-* `docker-compose run redis redis-cli -h redis` - start a redis-cli and connect to our redis container
-* `docker-compose run db psql -h db -U postgres` - connect psql to our running database
-* `docker-compose run web bin/rails console` - open a rails console (works for any rails command)
+- `docker-compose run redis redis-cli -h redis` - start a redis-cli and connect to our redis container
+- `docker-compose run db psql -h db -U postgres` - connect psql to our running database
+- `docker-compose run web bin/rails console` - open a rails console (works for any rails command)
 
 ## Resources
 

@@ -37,28 +37,28 @@ paginate: 5 # amount of posts to show
 paginate_path: /page:num/
 
 author:
-  name   : "Ashley Connor"
-  avatar : "/assets/images/avatar.jpg"
-  email  : me@ashleyconnor.co.uk
+  name: "Ashley Connor"
+  avatar: "/assets/images/avatar.jpg"
+  email: me@ashleyconnor.co.uk
   twitter: ashconnor
-  github : ashleyconnor
+  github: ashleyconnor
   linkedin: ashleyconnor
   location: Toronto, Canada
   stackoverflow: 196834/ash
 
 # Social Sharing
 twitter:
-  username               : &twitter "ashconnor"
+  username: &twitter "ashconnor"
 # facebook:
 #   username               : &facebook "ashleyconnor"
 #   app_id                 :
 #   publisher              :
-og_image                 : "/assets/images/site-logo.png"
+og_image: "/assets/images/site-logo.png"
 
 # Build settings
 markdown: kramdown
 theme: minimal-mistakes-jekyll
-gems:
+plugins:
   - jekyll-feed
   - jekyll-paginate
   - jekyll-sitemap
