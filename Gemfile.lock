@@ -45,6 +45,7 @@ GEM
       sass (~> 3.4)
     jekyll-sitemap (1.4.0)
       jekyll (>= 3.7, < 5.0)
+    jekyll-twitter-plugin (2.1.0)
     jekyll-watch (2.2.1)
       listen (~> 3.0)
     json (2.5.1)
@@ -93,6 +94,7 @@ DEPENDENCIES
   jekyll-compose
   jekyll-feed (~> 0.6)
   jekyll-redirect-from
+  jekyll-twitter-plugin
   json (>= 1.8)
   minima (~> 2.0)
   minimal-mistakes-jekyll
