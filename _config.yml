@@ -63,6 +63,7 @@ plugins:
   - jekyll-paginate
   - jekyll-sitemap
   - jekyll-redirect-from
+  - jekyll-twitter-plugin
 include: ["_pages"]
 exclude:
   - Gemfile
