@@ -24,9 +24,13 @@ So with that said I am going to routinely publish my salary, offers, raises, bon
 
 #### Sensible Development (2012 - 2014)
 
+Role: Software Developer
+
 £25,000 per annum. Raised to £26,000 after a year.
 
 #### Park Group PLC (2014)
+
+Role: Java Web Developer
 
 £30,000 per annum.
 
@@ -35,11 +39,15 @@ So with that said I am going to routinely publish my salary, offers, raises, bon
 
 #### Sportech PLC (2014 - 2015)
 
+Role: Agile Software Developer
+
 £25,000 per annum. Raised to £30,000 after 6 months.
 
 <sup>My only pay cut. The salary increase was prenegotiated before accepting the position.</sup>
 
 #### Ontario Teacher's Pension Plan (2015 - 2018)
+
+Role: Senior Software Developer (SO III)
 
 $86,332 CAD per annum. 5% bonus on average per year. Mandatory pension enrollment with a company match of 12%.
 
@@ -47,11 +55,15 @@ Salary reached approx $100,000 when leaving in 2018.
 
 #### Capital One (2018 - 2021)
 
+Role: Principal Software Developer
+
 $120,000 CAD per annum. Bonus 8-15%. Company match pension of 3.5%. Company ESPP with 8% discount. Signing bonus of $10,000.
 
 The salary was static other than "cost of living" increases.
 
 #### Jane Software Inc. (2021)
+
+Role: Ruby Developer
 
 $140,000 CAD per annum. Employee Stock Options.
 
@@ -59,9 +71,13 @@ $140,000 CAD per annum. Employee Stock Options.
 
 #### HashiCorp Canada (2021 - 2022)
 
+Role: Senior Engineer (Senior Site Reliability Engineer) (L3)
+
 $180,000 CAD per annum. 5200 RSUs. 12 month cliff then 3 month vesting periods.
 
 #### HashiCorp US (2022 - Present)
+
+Role: Senior Engineer (L3)
 
 $190,000 USD per annum. RSUs carry over.
 
@@ -70,6 +86,8 @@ $190,000 USD per annum. RSUs carry over.
 ### Previous Offers
 
 #### CarWow (2015)
+
+Role: Ruby Developer
 
 £45,000 per annum.
 
