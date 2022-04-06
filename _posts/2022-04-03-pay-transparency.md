@@ -43,7 +43,7 @@ Role: Agile Software Developer
 
 £25,000 per annum. Raised to £30,000 after 6 months.
 
-<sup>My only pay cut. The salary increase was prenegotiated before accepting the position.</sup>
+<sup>My only base pay cut. The salary increase was prenegotiated before accepting the position.</sup>
 
 #### Ontario Teacher's Pension Plan (2015 - 2018)
 
@@ -67,7 +67,7 @@ Role: Ruby Developer
 
 $140,000 CAD per annum. Employee Stock Options.
 
-<sup>Jane Software doesn't appear on my resume because I left the position after 6 weeks after realizing this job was also a poor fit.</sup>
+<sup>Jane Software doesn't appear on my resume because I left the position after 6 weeks after realizing this job was also a poor fit. Technically this was also a pay cut with bonuses included. At the time I planned to relocate to Vancouver and this position accomodated that.</sup>
 
 #### HashiCorp Canada (2021 - 2022)
 
