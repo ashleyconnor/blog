@@ -83,6 +83,8 @@ $190,000 USD per annum. RSUs carry over.
 
 <sup>I'm relocating to San Diego, California in July 2022. HashiCorp has region-based pay in the United States and my salary was adjusted accordingly.</sup>
 
+Pay revision 2022-06-01 $197,000.
+
 ### Previous Offers
 
 #### CarWow (2015)
@@ -92,3 +94,7 @@ Role: Ruby Developer
 £45,000 per annum.
 
 <sup>Offer was declined as it would have left me worse off relocating to London from Liverpool.</sup>
+
+*Edit History*
+
+2022-11-13 - Updated pay HashiCorp
