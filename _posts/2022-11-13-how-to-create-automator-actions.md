@@ -10,9 +10,11 @@ the content making it unreadable without clicking to expand.
 
 I was using a handy [script](https://gist.github.com/ashleyconnor/ee6481430fc166e4fe8688e54b848c6b) I'd put together that leverages [ImageMagick](https://imagemagick.org/index.php) to resize to any image to 1600x900px, which is the optimal size for Twitter feeds.
 
-The script also uses ImageMagick's histogram feature to fill in any empty space using the dominate color of the image. This is expecially hand when clipping text that has a background other than white, like the [Financial Times](https://www.ft.com/).
+The script also uses ImageMagick's histogram feature to fill in any empty space using the dominant color of the image. This is expecially hand when clipping text that has a background other than white, like the [Financial Times](https://www.ft.com/).
 
-Excuting the script is what this post is about. Firing up the command line, looking for the image and running the script with the image path as an argument is tedious.
+Executing the script is what this post is about.
+
+Firing up the command line, looking for the image and running the script with the image path as an argument is tedious.
 
 It'd be much nicer if we could right click an image or a selection of images and resize them right in Finder.
 
