@@ -1,8 +1,5 @@
 ---
 title: How to run a shell script over images with Automator
-tags: til
-description: ""
-excerpt: ""
 ---
 
 When posting screenshots of text to Twitter sometimes the thumbnail gets messed up and clips
