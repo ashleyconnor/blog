@@ -17,7 +17,7 @@ Install this using `pip`:
 $ pip install audible-cli
 ```
 
-Once installed we can run `audible quickstart` - this will start a wizard that creates a configration file.
+Once installed we can run `audible quickstart` - this will start a wizard that creates a configuration file.
 
 Next we can run `audible library list` to list our Audible library and choose the audiobook we want to download.
 
