@@ -13,10 +13,6 @@ gem 'json', '>= 1.8'
 # Happy Jekylling!
 gem "jekyll", "3.8.6"
 
-
-# Useful shortcuts - see README.md
-gem 'jekyll-compose', group: [:jekyll_plugins]
-
 # This is the default theme for new Jekyll sites. You may change this to anything you like.
 gem "minima", "~> 2.0"
 
@@ -27,6 +23,8 @@ gem "jekyll-redirect-from"
 
 # If you have any plugins, put them here!
 group :jekyll_plugins do
+   gem 'jekyll-compose'
+   gem 'jekyll-til', path: './jekyll-til'
    gem "jekyll-feed", "~> 0.6"
 end
 

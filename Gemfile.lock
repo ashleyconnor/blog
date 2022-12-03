@@ -1,3 +1,8 @@
+PATH
+  remote: jekyll-til
+  specs:
+    jekyll-til (0.1.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -94,6 +99,7 @@ DEPENDENCIES
   jekyll-compose
   jekyll-feed (~> 0.6)
   jekyll-redirect-from
+  jekyll-til!
   jekyll-twitter-plugin
   json (>= 1.8)
   minima (~> 2.0)
