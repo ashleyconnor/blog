@@ -67,7 +67,7 @@ twitter:
 #   username               : &facebook "ashleyconnor"
 #   app_id                 :
 #   publisher              :
-og_image: /assets/images/avatar.jpg
+og_image: /assets/images/global/og_banner.png
 
 # Build settings
 markdown: kramdown
