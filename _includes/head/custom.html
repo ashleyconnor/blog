@@ -1,2 +1,8 @@
 <link rel="shortcut icon" href="assets/images/favicon.ico" type="image/x-icon">
 <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@ashleyconnor">
+<meta name="twitter:creator" content="@ashleyconnor">
+{% if page.title %}<meta name="twitter:title" content="{{ page.title | markdownify | strip_html | strip_newlines | escape_once }}">{% endif %}
+{% if page.excerpt %}<meta name="twitter:description" content="{{ page.excerpt | markdownify | strip_html | strip_newlines | escape_once }}">{% endif %}
+<meta name="twitter:image" content="https://www.ashleyconnor.co.uk/assets/images/global/og_banner.png">
