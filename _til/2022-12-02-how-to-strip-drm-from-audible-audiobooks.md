@@ -1,5 +1,4 @@
 ---
-layout: single
 title: How to strip DRM from Audible audiobooks
 ---
 
