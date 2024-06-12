@@ -263,4 +263,3 @@ Now we can visit our site securely at [https://phoenix.mydomain.com](https://pho
 
 ![SSL Certificate](https://www.dropbox.com/s/qx9d7h0sg3uziij/Screenshot%202016-03-06%2011.57.52.png?dl=1)
 
-If you have any questions or spot an error just send me a tweet [@ashconnor](https://twitter.com/ashconnor)

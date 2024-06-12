@@ -54,19 +54,12 @@ author:
   name: Ashley Connor
   avatar: /assets/images/avatar.jpg
   email: me@ashleyconnor.co.uk
-  twitter: ashconnor
   github: ashleyconnor
   linkedin: ashleyconnor
   location: San Diego, California
   stackoverflow: 196834/ash
 
 # Social Sharing
-twitter:
-  username: &twitter ashconnor
-# facebook:
-#   username               : &facebook "ashleyconnor"
-#   app_id                 :
-#   publisher              :
 og_image: /assets/images/global/og_banner.png
 
 # Build settings

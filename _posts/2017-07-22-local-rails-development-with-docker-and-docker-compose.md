@@ -454,5 +454,3 @@ We've seen how to run one-off tasks using docker. So here's a few commands I've 
 - [Running a Rails Development Environment in Docker](https://blog.codeship.com/running-rails-development-environment-docker/)
 - [Connecting docker containers](https://blog.csainty.com/2016/07/connecting-docker-containers.html)
 - [Docker docs](https://docs.docker.com)
-
-Feel free to Tweet any errors to me [@ashconnor](https://twitter.com/ashconnor)
