@@ -53,11 +53,20 @@ paginate_path: /page:num/
 author:
   name: Ashley Connor
   avatar: /assets/images/avatar.jpg
-  email: me@ashleyconnor.co.uk
-  github: ashleyconnor
-  linkedin: ashleyconnor
+  links:
+    - label: Email
+      icon: fa-solid fa-envelope
+      url: "mailto:me@ashleyconnor.co.uk"
+    - label: GitHub
+      icon: fa-brands fa-github
+      url: "https://github.com/ashleyconnor"
+    - label: StackOverflow
+      icon: fa-brands fa-stack-overflow
+      url: "https://stackoverflow.com/users/196834/ashley"
+    - label: Bluesky
+      icon: fa-brands fa-bluesky
+      url: "https://bsky.app/profile/ashconnor.bsky.social/"
   location: San Diego, California
-  stackoverflow: 196834/ash
 
 # Social Sharing
 og_image: /assets/images/global/og_banner.png
