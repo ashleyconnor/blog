@@ -11,7 +11,7 @@ gem 'json', '>= 1.8'
 #
 # This will help ensure the proper Jekyll version is running.
 # Happy Jekylling!
-gem "jekyll", "3.8.6"
+gem "jekyll", "3.10.0"
 
 # This is the default theme for new Jekyll sites. You may change this to anything you like.
 gem "minima", "~> 2.0"
@@ -23,12 +23,15 @@ gem "jekyll-redirect-from"
 
 # If you have any plugins, put them here!
 group :jekyll_plugins do
-   gem 'jekyll-compose'
+   gem 'jekyll-compose', "~> 0.12.0"
    gem 'jekyll-til', path: './jekyll-til'
    gem "jekyll-feed", "~> 0.6"
+   gem "jekyll-twitter-plugin"
 end
 
 gem "minimal-mistakes-jekyll"
 
-# plugins
-gem 'jekyll-twitter-plugin'
+gem "kramdown-parser-gfm"
+
+# cloudflare pages junk
+gem "ffi", "< 1.17.0"
