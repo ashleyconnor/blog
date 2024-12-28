@@ -63,9 +63,6 @@ author:
     - label: StackOverflow
       icon: fa-brands fa-stack-overflow
       url: "https://stackoverflow.com/users/196834/ashley"
-    - label: Bluesky
-      icon: fa-brands fa-bluesky
-      url: "https://bsky.app/profile/ashconnor.bsky.social/"
   location: San Diego, California
 
 # Social Sharing

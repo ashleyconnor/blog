@@ -12,7 +12,7 @@ This got me thinking of when **#talkpay** was trending on Twitter circa 2018. I 
 
 I never posted my salary back then as I'd always viewed revealing one's salary as a [zero-sum game](https://en.wikipedia.org/wiki/Zero-sum_game), sort of like playing poker with your hand facing the other players.
 
-{% twitter https://twitter.com/alicegoldfuss/status/994641532824141828 %}
+![alicegoldfuss via Twitter](/assets/images/tweets/talk_pay_tweet.png)
 
 In 2017 I was elected by my union local to negotiate a collective agreement with our employer. All salaries were readily available as they are printed in the previous agreement. Given someone's title and tenure, you could calculate any bargaining unit member's salary.
 
