@@ -4,9 +4,9 @@ title: About Elixir Pattern Matching in Anon Functions
 
 I was watching a [recording of José Valim livecoding solutions to the 2021 Advent of Code problems](https://www.youtube.com/watch?v=1rFlhFbJ1_s) and I noticed a piece of code that I didn't know was valid Elixir syntax.
 
-In an anonymous functions it's possible to pattern match on the input running code based on the match.
+In Elixir, anonymous functions can use pattern matching on their input to execute different code based on the match.
 
-Similar to how a `cond` statement works:
+This works similarly to a cond statement:
 
 ```elixir
 cond do
@@ -19,7 +19,7 @@ cond do
 end
 ```
 
-Which makes this code in the video possible...
+This pattern matching capability enables code like this from the video:
 
 ```elixir
 input
