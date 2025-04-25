@@ -17,6 +17,11 @@ $header-font-family : $sans-serif-narrow;
 @import "minimal-mistakes/skins/{{ site.minimal_mistakes_skin | default: 'default' }}"; // skin
 @import "minimal-mistakes"; // main partials
 
+
+ul.author__urls.social-icons {
+  margin-top: 1em;
+}
+
 .page__title {
   line-height: 1.2;
 }
