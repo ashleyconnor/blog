@@ -69,9 +69,7 @@ GEM
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
     mercenary (0.3.6)
-    minima (2.1.0)
-      jekyll (~> 3.3)
-    minimal-mistakes-jekyll (4.26.2)
+    minimal-mistakes-jekyll (4.27.0)
       jekyll (>= 3.7, < 5.0)
       jekyll-feed (~> 0.1)
       jekyll-gist (~> 1.5)
@@ -114,8 +112,7 @@ DEPENDENCIES
   jekyll-twitter-plugin
   json (>= 1.8)
   kramdown-parser-gfm
-  minima (~> 2.0)
-  minimal-mistakes-jekyll
+  minimal-mistakes-jekyll (~> 4.27.0)
 
 RUBY VERSION
    ruby 2.7.8p225
