@@ -57,13 +57,18 @@ author:
     - label: Email
       icon: fa-solid fa-envelope
       url: "mailto:me@ashleyconnor.co.uk"
+    - label: Bluesky
+      icon: fa-brands fa-square-bluesky
+      url: "https://bsky.app/profile/ashconnor.bsky.social"
     - label: GitHub
       icon: fa-brands fa-github
       url: "https://github.com/ashleyconnor"
     - label: StackOverflow
       icon: fa-brands fa-stack-overflow
       url: "https://stackoverflow.com/users/196834/ashley"
-  location: San Diego, California
+  location:
+    label: San Diego
+    icon: fa-solid fa-earth-americas
 
 # Social Sharing
 og_image: /assets/images/global/og_banner.png
