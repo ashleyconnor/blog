@@ -1,13 +1,13 @@
 ---
 title: To London and back - my worst tech interview
-excerpt: ""
+excerpt: After a really bad day at work I rushed into a job search unprepared.
 ---
 
 In 2013 I worked at a small tech company in Brighton, England, my first job after graduation.
 
 The company, which consisted of the owner, myself and a senior engineer; hosted an auction platform for customers, also providing customisations, design and support.
 
-I enjoyed this job as it gave me a lot of 1-on-1 time with a talented senior developer who frankly had the patience of a saint. Back then I was very *green* to the ways that software is architectured and most of the code I wrote was downright awful.
+I enjoyed this job as it gave me a lot of 1-on-1 time with a talented senior developer who frankly had the patience of a saint. Back then I was very _green_ to the ways that software is architectured and most of the code I wrote was downright awful.
 
 ### The customer's always right
 

@@ -1,7 +1,7 @@
 ---
 title: Pay transparency
 description: ""
-excerpt: ""
+excerpt: Inspired by coworkers posting their salaries publicly, I decided to do the same.
 ---
 
 I was recently inspired after discovering a Slack channel at work for discussing pay.
@@ -35,7 +35,6 @@ Role: Java Web Developer
 £30,000 per annum.
 
 <sup>Park Group doesn't appear on my resume because I left the position after 6 weeks after realizing the job was a poor fit.</sup>
-
 
 #### Sportech PLC (2014 - 2015)
 
@@ -95,6 +94,6 @@ Role: Ruby Developer
 
 <sup>Offer was declined as it would have left me worse off relocating to London from Liverpool.</sup>
 
-*Edit History*
+_Edit History_
 
 2022-11-13 - Updated pay HashiCorp
