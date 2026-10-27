@@ -2,7 +2,8 @@ import { execa } from 'execa';
 import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { loadItems } from '../packages/content/src/load-items';
 
 const root = join(import.meta.dirname, '..');
 const fixtures = join(root, 'tests/fixtures/content');
@@ -406,6 +407,23 @@ describe('sitemap', () => {
     expect(sitemapText(dist)).not.toContain(`${ORIGIN}/404`);
   });
 
+  // The sitemap filter reads content outside Astro (loadItems) and must derive the same URLs the
+  // build generates, or unlisted and draft pages would leak into the sitemap unnoticed.
+  it("the sitemap filter's entry URLs are the pages the build generates", () => {
+    vi.stubEnv('CONTENT_ROOT', fixtures);
+    const items = loadItems();
+    vi.unstubAllEnvs();
+    // TIL hrefs are absolute on the subdomain (checked in til.test.ts). Photo galleries
+    // (/photos/<id>/) are not built on this branch yet: they come with the photo gallery task.
+    const local = items.filter((item) => item.href.startsWith('/') && item.type !== 'photos');
+    expect(local.map((item) => item.href)).toContain(`/${UNLISTED.path}/`);
+    expect(local.map((item) => item.href)).toContain(`/${DRAFT.path}/`);
+    for (const { href, draft } of local) {
+      if (!draft) expect(existsSync(join(dist, href, 'index.html')), href).toBe(true);
+      expect(existsSync(join(draftDist, href, 'index.html')), href).toBe(true);
+    }
+  });
+
   it('robots.txt allows crawling and points at the sitemap index', () => {
     const robots = file(dist, 'robots.txt');
     expect(robots).toMatch(/^User-agent: \*$/m);
@@ -424,7 +442,7 @@ describe('_redirects', () => {
         '/2025/04/24/basic-post.html /2025/04/23/basic-post/ 301',
         '/2014/09/07/unlisted-post.html /2014/09/07/unlisted-post/ 301',
         '/blog/2014/09/07/unlisted-post/ /2014/09/07/unlisted-post/ 301',
-        '/page2/ /page/2/ 301',
+        '/page2/ / 301',
         '/assets/pdfs/resume.pdf /resume.pdf 301',
       ]),
     );
@@ -440,6 +458,11 @@ describe('_redirects', () => {
       expect(out.indexOf(rule), rule).toBeGreaterThanOrEqual(0);
       expect(out.indexOf(rule), rule).toBeLessThan(wildcard);
     }
+  });
+
+  it('never redirects /instaboxd/privacy/, which is a real page', () => {
+    expect(file(dist, '_redirects')).not.toContain('/instaboxd/privacy/');
+    expect(existsSync(join(dist, 'instaboxd/privacy/index.html'))).toBe(true);
   });
 
   it('only redirects to drafts in builds that show them', () => {

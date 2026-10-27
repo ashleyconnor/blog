@@ -11,12 +11,13 @@ export interface RedirectEntry {
 
 /**
  * Old URLs no entry owns. `/til/index` must come before the `/til/*` wildcard, which would otherwise
- * send it to `<TIL_ORIGIN>/index`.
+ * send it to `<TIL_ORIGIN>/index`. Jekyll's `/page2/` goes to the homepage: its page size differed,
+ * so the old page 2 never matched the new one (which may not exist at all).
  */
 const STATIC_RULES = [
   `/til/index ${TIL_ORIGIN}/ 301`,
   `/til/* ${TIL_ORIGIN}/:splat 301`,
-  '/page2/ /page/2/ 301',
+  '/page2/ / 301',
   '/assets/pdfs/resume.pdf /resume.pdf 301',
 ];
 

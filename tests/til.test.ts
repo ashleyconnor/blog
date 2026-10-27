@@ -2,7 +2,8 @@ import { execa } from 'execa';
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { loadItems } from '../packages/content/src/load-items';
 
 const root = join(import.meta.dirname, '..');
 
@@ -296,6 +297,21 @@ describe('feed, sitemap and robots', () => {
     expect(existsSync(join(draftDist, DRAFT, 'index.html'))).toBe(true);
     expect(sitemapText(draftDist)).not.toContain(DRAFT);
     expect(sitemapText(draftDist)).toContain(`<loc>${ORIGIN}/${READ_FILE}/</loc>`);
+  });
+
+  // The sitemap filter reads content outside Astro (loadItems): its TIL URLs must be the pages built here.
+  it("the sitemap filter's TIL URLs are the pages the build generates", () => {
+    vi.stubEnv('CONTENT_ROOT', join(root, 'tests/fixtures/content'));
+    const tils = loadItems().filter((item) => item.type === 'til');
+    vi.unstubAllEnvs();
+    const hrefs = tils.map((item) => item.href);
+    expect(hrefs).toEqual(expect.arrayContaining([`${ORIGIN}/${UNLISTED}/`, `${ORIGIN}/${DRAFT}/`]));
+    for (const { href, draft } of tils) {
+      expect(href.startsWith(`${ORIGIN}/`), href).toBe(true);
+      const path = new URL(href).pathname;
+      if (!draft) expect(existsSync(join(dist, path, 'index.html')), href).toBe(true);
+      expect(existsSync(join(draftDist, path, 'index.html')), href).toBe(true);
+    }
   });
 
   it('robots.txt points at the TIL sitemap', () => {

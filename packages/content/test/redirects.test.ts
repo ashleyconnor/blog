@@ -37,7 +37,7 @@ describe('buildRedirects', () => {
     expect(out).toEqual([
       '/til/index https://til.ashleyconnor.co.uk/ 301',
       '/til/* https://til.ashleyconnor.co.uk/:splat 301',
-      '/page2/ /page/2/ 301',
+      '/page2/ / 301',
       '/assets/pdfs/resume.pdf /resume.pdf 301',
     ]);
   });
