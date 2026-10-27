@@ -41,7 +41,7 @@ I then paste in [my script](https://gist.github.com/ashleyconnor/ee6481430fc166e
 
 The workflow then looks like this:
 
-[![Finished Workflow](../posts/_images/automator/workflow.png)](../posts/_images/automator/workflow.png)
+![Finished Workflow](../posts/_images/automator/workflow.png)
 
 Then once we save the Quick Action becomes available in our conext menu:
 

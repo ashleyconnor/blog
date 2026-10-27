@@ -113,12 +113,41 @@ describe('convertBody: images', () => {
     );
   });
 
-  it('rewrites both the image and the link of a linked image, keeping titles', () => {
+  it('unwraps a link to the same file around an image, leaving just the rewritten image', () => {
+    expect(convertBody('[![a](/assets/images/x/y.png)](/assets/images/x/y.png)').body).toBe(
+      '![a](./_images/x/y.png)',
+    );
+  });
+
+  it('unwraps linked images with titles, encoded spaces and angle brackets', () => {
     const md =
       '[![Finished](/assets/images/automator/workflow.png "Done")](/assets/images/automator/workflow.png)';
     expect(convertBody(md, { imageBase: '../posts/_images/' }).body).toBe(
-      '[![Finished](../posts/_images/automator/workflow.png "Done")](../posts/_images/automator/workflow.png)',
+      '![Finished](../posts/_images/automator/workflow.png "Done")',
     );
+    expect(
+      convertBody('[![a](</assets/images/My Shot.png>)](/assets/images/My%20Shot.png)').body,
+    ).toBe('![a](./_images/my-shot.png)');
+  });
+
+  it('records an unwrapped linked image once', () => {
+    const md = '[![a](/assets/images/x/y.png)](/assets/images/x/y.png)';
+    expect(findImages(md).localImages).toEqual(['/assets/images/x/y.png']);
+  });
+
+  it('never rewrites a plain link to an image file, and warns about it', () => {
+    const md = 'See the [full size image](/assets/images/x/y.png) here.';
+    const { body, warnings } = convertBody(md);
+    expect(body).toBe(md);
+    expect(warnings).toEqual([`unconverted image reference: ${md}`]);
+    expect(findImages(md).localImages).toEqual([]);
+  });
+
+  it('keeps a link around an image that points at a different file, and warns', () => {
+    const md = '[![a](/assets/images/x/y.png)](/assets/images/x/z.png)';
+    const { body, warnings } = convertBody(md);
+    expect(body).toBe('[![a](./_images/x/y.png)](/assets/images/x/z.png)');
+    expect(warnings).toEqual([`unconverted image reference: ${body}`]);
   });
 
   it('does not touch image-like text inside code fences or ordinary links', () => {

@@ -31,9 +31,12 @@ const IAL = /^\{:\s*([^}]*?)\s*\}\s*$/;
 const LIQUID = /\{%.*?%\}|\{\{.*?\}\}/g;
 const LEADING_BLANK_LINES = /^(?:[ \t]*\n)+/;
 
-// Both match the destination of a markdown link or image: `](dest` or `](<dest with spaces>`.
-const ANY_DESTINATION = /(\]\(\s*)(<[^>\n]*>|[^)\s]+)/g;
+// Matches the destination of a markdown image: `![alt](dest` or `![alt](<dest with spaces>`. Only
+// images are ever rewritten: Astro resolves relative paths for images but not for link hrefs.
 const IMAGE_DESTINATION = /(!\[[^\]]*\]\(\s*)(<[^>\n]*>|[^)\s]+)/g;
+// An image wrapped in a link: `[![alt](src "title")](href "title")`. Captures the image, src and href.
+const LINKED_IMAGE =
+  /\[(!\[[^\]]*\]\(\s*(<[^>\n]*>|[^)\s]+)(?:\s+(?:"[^"]*"|'[^']*'))?\s*\))\]\(\s*(<[^>\n]*>|[^)\s]+)(?:\s+(?:"[^"]*"|'[^']*'))?\s*\)/g;
 const DROPBOX_URL = /^https?:\/\/(?:[\w-]+\.)*dropbox(?:usercontent)?\.com\//;
 
 const LANGUAGE_ALIASES: Record<string, string> = { yml: 'yaml' };
@@ -164,14 +167,24 @@ function convert(md: string, options: ConvertBodyOptions): Converted {
   const out: Line[] = [];
 
   const rewriteLine = (text: string): string => {
-    const local = text.replace(ANY_DESTINATION, (match, open: string, destination: string) => {
-      const target = decode(unwrapDestination(destination));
-      if (!target.startsWith(LOCAL_IMAGE_PREFIX)) return match;
-      localImages.add(target);
-      return `${open}${formatDestination(imageBase + localImagePath(target))}`;
-    });
-    return local.replace(IMAGE_DESTINATION, (match, open: string, destination: string) => {
+    // Jekyll themes link a thumbnail to its full-size file. The new site's image component already
+    // links to the optimised original, so a link to the very same file is redundant: unwrap it.
+    const unwrapped = text.replace(
+      LINKED_IMAGE,
+      (match, image: string, src: string, href: string) => {
+        const target = decode(unwrapDestination(href));
+        return target.startsWith(LOCAL_IMAGE_PREFIX) && decode(unwrapDestination(src)) === target
+          ? image
+          : match;
+      },
+    );
+    return unwrapped.replace(IMAGE_DESTINATION, (match, open: string, destination: string) => {
       const url = unwrapDestination(destination);
+      const target = decode(url);
+      if (target.startsWith(LOCAL_IMAGE_PREFIX)) {
+        localImages.add(target);
+        return `${open}${formatDestination(imageBase + localImagePath(target))}`;
+      }
       if (!DROPBOX_URL.test(url)) return match;
       dropboxImages.add(url);
       const copy = options.dropboxImages?.get(url);

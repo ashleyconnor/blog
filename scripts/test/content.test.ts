@@ -32,6 +32,14 @@ function entries(collection: 'posts' | 'til'): Entry[] {
   }));
 }
 
+// `![alt](dest)` markup, and just the destination of each one (angle brackets removed).
+const IMAGE_MARKUP = /!\[[^\]]*\]\(\s*(?:<[^>\n]*>|[^)\s]+)[^)]*\)/g;
+function imageDestinations(body: string): string[] {
+  return [...body.matchAll(/!\[[^\]]*\]\(\s*(<[^>\n]*>|[^)\s]+)/g)].map(([, destination]) =>
+    destination!.startsWith('<') ? destination!.slice(1, -1) : destination!,
+  );
+}
+
 const posts = entries('posts');
 const tils = entries('til');
 
@@ -76,14 +84,32 @@ describe('migrated content', () => {
     const missing: string[] = [];
     let checked = 0;
     for (const entry of [...posts, ...tils]) {
-      for (const [, destination] of entry.body.matchAll(/\]\(\s*(\.{1,2}\/[^)\s]+)/g)) {
+      for (const destination of imageDestinations(entry.body)) {
+        if (!destination.startsWith('./') && !destination.startsWith('../')) continue;
         checked++;
-        if (!existsSync(resolve(dirname(entry.path), destination!)))
+        if (!existsSync(resolve(dirname(entry.path), destination)))
           missing.push(`${entry.name}: ${destination}`);
       }
     }
     expect(checked).toBeGreaterThan(0);
     expect(missing).toEqual([]);
+  });
+
+  it('leaves no unrewritten image path, and no link into the images folder', () => {
+    // Astro only resolves relative paths for images, so a link whose href was rewritten would 404.
+    const problems: string[] = [];
+    for (const entry of [...posts, ...tils]) {
+      for (const destination of imageDestinations(entry.body)) {
+        if (destination.startsWith('/assets/'))
+          problems.push(`${entry.name}: image ${destination}`);
+      }
+      const withoutImages = entry.body.replace(IMAGE_MARKUP, '');
+      for (const [, href] of withoutImages.matchAll(/\]\(\s*(<[^>\n]*>|[^)\s]+)/g)) {
+        if (/_images\/|^<?\/assets\/images\//.test(href!))
+          problems.push(`${entry.name}: link ${href}`);
+      }
+    }
+    expect(problems).toEqual([]);
   });
 
   it('makes every post that uses <Callout> an .mdx file importing it', () => {
