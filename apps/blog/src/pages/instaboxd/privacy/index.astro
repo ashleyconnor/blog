@@ -1,0 +1,17 @@
+---
+import { getEntry, render } from 'astro:content';
+import BaseLayout from '@ac/ui/components/BaseLayout.astro';
+import Prose from '@ac/ui/components/Prose.astro';
+
+// The InstaBoxd app's privacy policy: it must stay at exactly /instaboxd/privacy/.
+const entry = await getEntry('pages', 'instaboxd-privacy');
+if (!entry) throw new Error('Missing content/pages/instaboxd-privacy.md (served at /instaboxd/privacy/)');
+const { Content } = await render(entry);
+---
+
+<BaseLayout title={entry.data.title} canonical={new URL('/instaboxd/privacy/', Astro.site)}>
+  <article class="py-10">
+    <h1 class="mb-8 font-heading text-3xl leading-[1.15] font-bold text-head md:text-4xl">{entry.data.title}</h1>
+    <Prose><Content /></Prose>
+  </article>
+</BaseLayout>

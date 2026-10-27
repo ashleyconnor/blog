@@ -35,6 +35,11 @@ export function postPath(entry: { id: string; data: { date: Date } }): string {
   return `/${year}/${month}/${day}/${slug}/`;
 }
 
+/** The two-digit day of the month (`01`–`31`) in Los Angeles time. */
+export function dayOfMonth(date: Date): string {
+  return partsOf(date).day;
+}
+
 const shortMonth = new Intl.DateTimeFormat('en-US', { timeZone: TIME_ZONE, month: 'short' });
 
 /** `23 Apr 2025`, in Los Angeles time. */

@@ -1,16 +1,17 @@
 ---
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
 import { getCollection, render } from 'astro:content';
-import { formatDate, postParams, postPath, readingMinutes } from '@ac/content';
+import { formatDate, postParams, postPath, readingMinutes, showDrafts, stripMarkdown } from '@ac/content';
 import BaseLayout from '@ac/ui/components/BaseLayout.astro';
 import Prose from '@ac/ui/components/Prose.astro';
 import Toc from '@ac/ui/components/Toc.astro';
 import TypePill from '@ac/ui/components/TypePill.astro';
 
-// Unlisted posts are built (reachable by URL); drafts only when previewing them.
+// Unlisted posts are built (reachable by URL); drafts only when previewing them. The URL date is
+// the Los Angeles calendar date (see `postParams`).
 export const getStaticPaths = (async () => {
-  const showDrafts = import.meta.env.PUBLIC_SHOW_DRAFTS === 'true';
-  const posts = await getCollection('posts', ({ data }) => showDrafts || !data.draft);
+  const drafts = showDrafts();
+  const posts = await getCollection('posts', ({ data }) => drafts || !data.draft);
   return posts.map((post) => ({ params: postParams(post), props: { post } }));
 }) satisfies GetStaticPaths;
 
@@ -22,7 +23,12 @@ const { Content, headings } = await render(post);
 const minutes = readingMinutes(post.body ?? '');
 ---
 
-<BaseLayout title={title} description={excerpt} canonical={new URL(postPath(post), Astro.site)} draft={draft}>
+<BaseLayout
+  title={title}
+  description={excerpt && stripMarkdown(excerpt)}
+  canonical={new URL(postPath(post), Astro.site)}
+  draft={draft}
+>
   <article class="py-10">
     <header class="mb-8">
       <TypePill type="post" />

@@ -1,0 +1,31 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import BaseLayout from '@ac/ui/components/BaseLayout.astro';
+import Pager from '@ac/ui/components/Pager.astro';
+import StreamList from '@ac/ui/components/StreamList.astro';
+import { publicStream } from '../lib/stream';
+
+// Page 1 is `/`, later pages `/page/N/`: the rest parameter carries the `page/` prefix, and
+// `format` rewrites the URLs `paginate` links to (`/N/`) to match.
+export const getStaticPaths = (async ({ paginate }) => {
+  const pages = paginate(await publicStream(), {
+    pageSize: 15,
+    format: (url) => url.replace(/^\/(\d+)\/$/, '/page/$1/'),
+  });
+  return pages.map(({ params, props }) => ({ params: { page: params.page && `page/${params.page}` }, props }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { page } = Astro.props;
+const first = page.currentPage === 1;
+---
+
+<BaseLayout
+  title={first ? 'Ashley Connor' : `Page ${page.currentPage} · Ashley Connor`}
+  canonical={new URL(page.url.current, Astro.site)}
+>
+  <h1 class="sr-only">Latest posts, TILs and photos{!first && `, page ${page.currentPage}`}</h1>
+  <StreamList items={page.data} />
+  <Pager current={page.currentPage} last={page.lastPage} prev={page.url.prev} next={page.url.next} />
+</BaseLayout>

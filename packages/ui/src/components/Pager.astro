@@ -1,0 +1,37 @@
+---
+interface Props {
+  current: number;
+  last: number;
+  /** URL of the newer page, if any. */
+  prev?: string;
+  /** URL of the older page, if any. */
+  next?: string;
+}
+
+const { current, last, prev, next } = Astro.props;
+const link = 'text-muted underline-offset-4 hover:text-head hover:underline';
+---
+
+{
+  last > 1 && (
+    <nav aria-label="Pagination" class="mt-8 grid grid-cols-[1fr_auto_1fr] items-center gap-4 text-[13px]">
+      <span>
+        {prev && (
+          <a href={prev} rel="prev" class={link}>
+            <span aria-hidden="true">←</span> Newer
+          </a>
+        )}
+      </span>
+      <p class="font-mono text-xs text-muted">
+        Page {current} of {last}
+      </p>
+      <span class="justify-self-end">
+        {next && (
+          <a href={next} rel="next" class={link}>
+            Older <span aria-hidden="true">→</span>
+          </a>
+        )}
+      </span>
+    </nav>
+  )
+}

@@ -1,0 +1,28 @@
+---
+import { groupByMonth, type StreamItem } from '@ac/content';
+import StreamRow from './StreamItem.astro';
+
+interface Props {
+  /** Already filtered and sorted, newest first (see `buildStream`). */
+  items: StreamItem[];
+}
+
+const groups = groupByMonth(Astro.props.items);
+---
+
+<div data-stream>
+  {
+    groups.map(({ label, items }) => (
+      <section>
+        <h2 class="mt-[22px] mb-1 border-b border-line pb-2 font-mono text-xs font-medium tracking-[0.06em] text-muted uppercase">
+          {label}
+        </h2>
+        <ul role="list">
+          {items.map((item) => (
+            <StreamRow item={item} />
+          ))}
+        </ul>
+      </section>
+    ))
+  }
+</div>
