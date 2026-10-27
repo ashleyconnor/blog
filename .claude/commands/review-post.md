@@ -52,6 +52,6 @@ line numbers of the file you read. If a group is empty, write "None".
 End with:
 
 - **Preview**: if `pnpm new` started this draft, its dev server is already running and printed the
-  draft URL. Otherwise run `PUBLIC_SHOW_DRAFTS=true pnpm dev:blog` (or `pnpm dev:til` for a TIL)
+  draft URL. Otherwise run `PUBLIC_SHOW_DRAFTS=true pnpm dev:blog` (`PUBLIC_SHOW_DRAFTS=true pnpm dev:til` for a TIL)
   and open the entry.
 - **Publish**: when ready, remove `draft: true` from the front matter and open a pull request.

@@ -10,7 +10,7 @@
     "check": "pnpm -r --filter './apps/*' check",
     "lighthouse": "LIGHTHOUSE_PRESET=desktop lhci autorun && LIGHTHOUSE_PRESET=mobile lhci autorun",
     "dev:blog": "pnpm --filter blog dev",
-    "dev:til": "pnpm --filter til dev",
+    "dev:til": "pnpm --filter til dev --port 4322",
     "new": "node --experimental-strip-types scripts/new.ts",
     "review:check": "node --experimental-strip-types scripts/review-checks.ts"
   },
