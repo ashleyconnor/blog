@@ -11,16 +11,19 @@ describe('scaffold', () => {
     await execa('pnpm', ['--filter', 'til', 'build'], { cwd: root });
 
     const dist = join(root, 'apps/blog/dist');
+    const html = readFileSync(join(dist, 'index.html'), 'utf8');
+    // The site stylesheet is inlined into each page; `_astro/` only holds stylesheets some pages link.
     const cssDir = join(dist, '_astro');
-    const css = readdirSync(cssDir)
-      .filter((f) => f.endsWith('.css'))
-      .map((f) => readFileSync(join(cssDir, f), 'utf8'))
-      .join('\n');
+    const css = [
+      ...readdirSync(cssDir)
+        .filter((f) => f.endsWith('.css'))
+        .map((f) => readFileSync(join(cssDir, f), 'utf8')),
+      ...[...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]),
+    ].join('\n');
     expect(css).toContain('#0f1629');
     expect(css).toContain('--font-heading');
     expect(css).toContain('.font-heading');
 
-    const html = readFileSync(join(dist, 'index.html'), 'utf8');
     expect(html).toContain('<meta name="color-scheme" content="dark">');
   }, 120_000);
 });

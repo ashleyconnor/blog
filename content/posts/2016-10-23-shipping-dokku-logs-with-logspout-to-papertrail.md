@@ -12,7 +12,7 @@ Just a quick post on how to ship logs from dokku applications to Papertrail.
 
 *Note: This should work with other providers such as Logentries Loggly or Splunk*
 
-### Install the dokku-logspout plugin
+## Install the dokku-logspout plugin
 
 In order to ship logs from dokku we need to install the [`dokku-logspout`](https://github.com/michaelshobbs/dokku-logspout) plugin.
 
@@ -29,7 +29,7 @@ dokku logspout:stream
 ```
 
 
-### Create your Papertrail system
+## Create your Papertrail system
 
 Log into your Papertrail account and click on the "Add Systems" button
 
@@ -41,7 +41,7 @@ After this we want to copy the URL that Papertrail gives us. This is where we sh
 
 In my case the URL is logs4.papertrailapp.com:17665
 
-### Configure Logspout
+## Configure Logspout
 
 To ship logs to our newly created system we need to give Logspout the URL from above.
 
@@ -64,7 +64,7 @@ dokku logspout:start
 dokku ps:rebuildall
 ```
 
-### Conclusion
+## Conclusion
 
 ![Papertrail dashboard](https://www.dropbox.com/s/3f3vvzl8v7xigvt/Screenshot%202016-10-23%2016.30.26.png?dl=1)
 

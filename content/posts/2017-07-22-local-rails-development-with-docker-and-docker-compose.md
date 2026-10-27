@@ -11,7 +11,7 @@ legacyUrls:
 
 This is just a quick overview of using Docker and Docker Compose to spin up a solid development environment.
 
-### Assumptions
+## Assumptions
 
 - You're using OSX
 - You have [Docker for OSX](https://www.docker.com/community-edition#/download) installed

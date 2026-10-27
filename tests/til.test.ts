@@ -249,6 +249,13 @@ describe('404', () => {
   });
 });
 
+describe('favicon', () => {
+  it('links an SVG favicon that the TIL build ships too', () => {
+    expect(page(dist, '')).toContain('<link rel="icon" href="/favicon.svg" type="image/svg+xml">');
+    expect(readFileSync(join(dist, 'favicon.svg'), 'utf8')).toMatch(/^<svg\b/);
+  });
+});
+
 describe('fonts', () => {
   it('never fakes a bold: mono text only uses weights that are loaded', () => {
     // JetBrains Mono only loads 400 and 500, so `font-mono` with semibold/bold would be synthesised.
