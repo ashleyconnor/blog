@@ -1,12 +1,21 @@
 import { execa } from 'execa';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 // The root package does not depend on @ac/content, so import the module directly.
-import { loadResume } from '../packages/content/src/resume';
+import { loadResume as loadResumeAt } from '../packages/content/src/resume';
 
 const root = join(import.meta.dirname, '..');
 const dist = join(root, 'apps/blog/dist');
+
+/** The real `content/resume.yml`, never the fixture a CONTENT_ROOT in the shell would pick. */
+const loadResume = () => loadResumeAt(join(root, 'content/resume.yml'));
+
+/**
+ * What a developer's shell might export: execa passes the parent's environment through, so the
+ * real-content build below must override both, or it would build the fixture resume.
+ */
+const SHELL = { CONTENT_ROOT: 'tests/fixtures/content', PUBLIC_SHOW_DRAFTS: 'true' };
 
 describe('resume.yml', () => {
   it('validates', () => {
@@ -28,10 +37,19 @@ describe('built resume', () => {
   let html: string;
 
   beforeAll(async () => {
-    // The full `build` script: astro build, then the PDF step.
-    await execa('pnpm', ['--filter', 'blog', 'build'], { cwd: root });
+    for (const [name, value] of Object.entries(SHELL)) vi.stubEnv(name, value);
+    // The full `build` script: astro build, then the PDF step. The real content (CONTENT_ROOT
+    // removed), drafts hidden; as blog-pages.test.ts pins its builds.
+    await execa('pnpm', ['--filter', 'blog', 'build'], {
+      cwd: root,
+      env: { CONTENT_ROOT: undefined, PUBLIC_SHOW_DRAFTS: 'false' },
+    });
     html = readFileSync(join(dist, 'resume/index.html'), 'utf8');
   }, 300_000);
+
+  afterAll(() => {
+    vi.unstubAllEnvs();
+  });
 
   it('resume page lists every role in resume.yml', () => {
     const { experience } = loadResume();

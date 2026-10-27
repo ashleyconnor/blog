@@ -256,3 +256,26 @@ describe('colours', () => {
     }
   });
 });
+
+describe('package manifest', () => {
+  it('declares every package its source imports at runtime as a dependency', () => {
+    const dir = join(root, 'packages/ui');
+    const { dependencies = {} } = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
+    const specifiers = new Set<string>();
+    for (const entry of readdirSync(join(dir, 'src'), { recursive: true, withFileTypes: true })) {
+      if (!entry.isFile()) continue;
+      const code = readFileSync(join(entry.parentPath, entry.name), 'utf8');
+      // `import type` is erased at build time; stylesheets pull packages in with @import and @plugin.
+      const imports = /^\s*(?:import(?!\s+type\b)[^'"]*?from\s*|import\s*|@import\s+|@plugin\s+)['"]([^'"]+)['"]/gm;
+      for (const [, specifier] of code.matchAll(imports)) specifiers.add(specifier!);
+    }
+    const packages = new Set(
+      [...specifiers]
+        .filter((specifier) => !/^(?:\.|astro:|node:)/.test(specifier))
+        .map((specifier) => specifier.split('/').slice(0, specifier.startsWith('@') ? 2 : 1).join('/')),
+    );
+    // StreamList and StreamItem call @ac/content helpers when they render.
+    expect(packages).toContain('@ac/content');
+    for (const name of packages) expect(Object.keys(dependencies), name).toContain(name);
+  });
+});
