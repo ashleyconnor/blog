@@ -1,11 +1,15 @@
-import { resolve } from 'node:path';
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { contentRoot, loadTags, parseTags } from '../src/tags';
 
 const repoRoot = resolve(import.meta.dirname, '../../..');
+const originalCwd = process.cwd();
 
 afterEach(() => {
   vi.unstubAllEnvs();
+  process.chdir(originalCwd);
 });
 
 describe('contentRoot', () => {
@@ -27,6 +31,56 @@ describe('contentRoot', () => {
   it('resolves a relative CONTENT_ROOT against the repo root, not the cwd', () => {
     vi.stubEnv('CONTENT_ROOT', 'tests/fixtures/content');
     expect(contentRoot()).toBe(resolve(repoRoot, 'tests/fixtures/content'));
+  });
+});
+
+// App builds run with cwd = apps/<app>, and Astro bundles page code into dist/ chunks, so the
+// repo root must come from the cwd (walking up to pnpm-workspace.yaml), never from import.meta.
+describe('contentRoot and loadTags from an app directory', () => {
+  it('finds <repo>/content when the cwd is apps/blog', () => {
+    vi.stubEnv('CONTENT_ROOT', undefined);
+    process.chdir(resolve(repoRoot, 'apps/blog'));
+    expect(contentRoot()).toBe(resolve(repoRoot, 'content'));
+    expect(loadTags().get('python')).toEqual({ slug: 'python', name: 'Python' });
+  });
+
+  it('resolves a relative CONTENT_ROOT against the repo root when the cwd is apps/blog', () => {
+    vi.stubEnv('CONTENT_ROOT', 'tests/fixtures/content');
+    process.chdir(resolve(repoRoot, 'apps/blog'));
+    expect(contentRoot()).toBe(resolve(repoRoot, 'tests/fixtures/content'));
+    expect(loadTags().size).toBe(12);
+  });
+
+  it('finds the root from a nested directory of a package', () => {
+    vi.stubEnv('CONTENT_ROOT', undefined);
+    process.chdir(resolve(repoRoot, 'packages/content/test'));
+    expect(contentRoot()).toBe(resolve(repoRoot, 'content'));
+  });
+
+  it('derives the root from the cwd, not from where this module lives', () => {
+    const other = realpathSync(mkdtempSync(join(tmpdir(), 'ac-content-root-')));
+    try {
+      writeFileSync(join(other, 'pnpm-workspace.yaml'), 'packages: []\n');
+      mkdirSync(join(other, 'apps/site'), { recursive: true });
+      vi.stubEnv('CONTENT_ROOT', undefined);
+      process.chdir(join(other, 'apps/site'));
+      expect(contentRoot()).toBe(join(other, 'content'));
+    } finally {
+      process.chdir(originalCwd);
+      rmSync(other, { recursive: true, force: true });
+    }
+  });
+
+  it('still accepts an absolute CONTENT_ROOT from outside any workspace', () => {
+    vi.stubEnv('CONTENT_ROOT', resolve(repoRoot, 'tests/fixtures/content'));
+    process.chdir('/');
+    expect(contentRoot()).toBe(resolve(repoRoot, 'tests/fixtures/content'));
+  });
+
+  it('fails clearly when no pnpm-workspace.yaml exists above the cwd', () => {
+    vi.stubEnv('CONTENT_ROOT', undefined);
+    process.chdir('/');
+    expect(() => contentRoot()).toThrow(/pnpm-workspace\.yaml/);
   });
 });
 

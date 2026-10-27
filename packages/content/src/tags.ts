@@ -1,6 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { z } from 'astro/zod';
 import { parse } from 'yaml';
 
@@ -9,17 +8,32 @@ export interface Tag {
   name: string;
 }
 
-// packages/content/src -> repository root
-const repoRoot = fileURLToPath(new URL('../../..', import.meta.url));
+/**
+ * The repository root: the nearest directory at or above the cwd holding `pnpm-workspace.yaml`.
+ * Found from the cwd rather than `import.meta.url` because Astro bundles page code into
+ * `dist/` chunks, where a module-relative path no longer points into the repository.
+ */
+function findRepoRoot(): string {
+  const start = process.cwd();
+  for (let dir = start; ; dir = dirname(dir)) {
+    if (existsSync(join(dir, 'pnpm-workspace.yaml'))) return dir;
+    if (dirname(dir) === dir) {
+      throw new Error(
+        `Could not find pnpm-workspace.yaml in ${start} or any parent directory; run from inside the repository or set CONTENT_ROOT to an absolute path.`,
+      );
+    }
+  }
+}
 
 /**
- * Directory holding all content (`tags.yml`, `posts/`, `til/`, `photos/`).
- * `CONTENT_ROOT` overrides it (tests point it at `tests/fixtures/content`); a relative
- * value is resolved against the repository root because app builds run from `apps/*`.
+ * Directory holding all content (`tags.yml`, `posts/`, `til/`, `photos/`): `<repo>/content`,
+ * or `CONTENT_ROOT` when set (tests point it at `tests/fixtures/content`). A relative
+ * `CONTENT_ROOT` is resolved against the repository root, because app builds run from `apps/*`.
  */
 export function contentRoot(): string {
   const override = process.env.CONTENT_ROOT;
-  return override ? resolve(repoRoot, override) : join(repoRoot, 'content');
+  if (override && isAbsolute(override)) return override;
+  return override ? resolve(findRepoRoot(), override) : join(findRepoRoot(), 'content');
 }
 
 const tagListSchema = z.array(z.object({ slug: z.string().min(1), name: z.string().min(1) }));

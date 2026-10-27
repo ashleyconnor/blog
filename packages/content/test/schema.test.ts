@@ -48,6 +48,32 @@ describe('postSchema', () => {
     ]);
   });
 
+  it('rejects unknown key', () => {
+    const result = postSchema.safeParse({ ...valid, unlised: true });
+    expect(result.success).toBe(false);
+    expect(messages(result).join('\n')).toContain('unlised');
+    expect(postSchema.safeParse({ ...valid, draf: true }).success).toBe(false);
+  });
+
+  it('rejects blank date', () => {
+    expect(postSchema.safeParse({ ...valid, date: null }).success).toBe(false);
+    expect(postSchema.safeParse({ ...valid, date: '' }).success).toBe(false);
+    expect(postSchema.safeParse({ ...valid, date: 'not a date' }).success).toBe(false);
+    expect(postSchema.safeParse({ ...valid, date: 0 }).success).toBe(false);
+    expect(postSchema.safeParse({ ...valid, date: undefined }).success).toBe(false);
+  });
+
+  it('rejects blank updated', () => {
+    expect(postSchema.safeParse({ ...valid, updated: null }).success).toBe(false);
+    expect(postSchema.safeParse({ ...valid, updated: '' }).success).toBe(false);
+  });
+
+  it('accepts Date objects for date and updated (as parsed from YAML)', () => {
+    const parsed = postSchema.parse({ ...valid, date: new Date('2025-04-23'), updated: new Date('2025-05-01') });
+    expect(parsed.date).toEqual(new Date('2025-04-23'));
+    expect(parsed.updated).toEqual(new Date('2025-05-01'));
+  });
+
   it('rejects empty tags', () => {
     const result = postSchema.safeParse({ ...valid, tags: [] });
     expect(result.success).toBe(false);
@@ -72,6 +98,8 @@ describe('postSchema', () => {
 describe('tilSchema', () => {
   it('shares the common front matter rules', () => {
     expect(tilSchema.safeParse(valid).success).toBe(true);
+    expect(tilSchema.safeParse({ ...valid, unlised: true }).success).toBe(false);
+    expect(tilSchema.safeParse({ ...valid, date: null }).success).toBe(false);
     expect(messages(tilSchema.safeParse({ ...valid, tags: ['pyhton'] })).join()).toContain('Unknown tag "pyhton"');
     expect(tilSchema.safeParse({ ...valid, tags: [] }).success).toBe(false);
   });
@@ -91,6 +119,17 @@ describe('photosSchema', () => {
     const result = schema.safeParse({ ...valid, images: [{ src: 'a.jpg', alt: '' }] });
     expect(result.success).toBe(false);
     expect(paths(result)).toEqual([['images', 0, 'alt']]);
+  });
+
+  it('rejects unknown keys, at the top level and inside an image', () => {
+    expect(schema.safeParse({ ...photo, unlised: true }).success).toBe(false);
+    const nested = schema.safeParse({ ...valid, images: [{ src: 'a.jpg', alt: 'x', captoin: 'typo' }] });
+    expect(nested.success).toBe(false);
+    expect(paths(nested)).toEqual([['images', 0]]);
+  });
+
+  it('rejects blank date', () => {
+    expect(schema.safeParse({ ...photo, date: null }).success).toBe(false);
   });
 
   it('rejects missing alt', () => {
