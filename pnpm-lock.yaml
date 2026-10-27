@@ -310,6 +310,9 @@ importers:
       '@ac/content':
         specifier: workspace:*
         version: link:../packages/content
+      github-slugger:
+        specifier: 2.0.0
+        version: 2.0.0
       yaml:
         specifier: 2.9.1
         version: 2.9.1

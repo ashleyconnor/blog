@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@ac/content": "workspace:*",
+    "github-slugger": "2.0.0",
     "yaml": "2.9.1"
   },
   "devDependencies": {
