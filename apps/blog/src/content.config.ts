@@ -1,4 +1,6 @@
 import { contentRoot } from '@ac/content';
-import { defineSharedCollections } from '@ac/content/collections';
+import { definePagesCollection, defineSharedCollections } from '@ac/content/collections';
 
-export const collections = defineSharedCollections(contentRoot());
+const root = contentRoot();
+
+export const collections = { ...defineSharedCollections(root), pages: definePagesCollection(root) };

@@ -10,6 +10,7 @@ export interface StreamItem {
   title: string;
   date: Date;
   tags: string[];
+  /** Plain text: Markdown in the front-matter excerpt is stripped (see `stripMarkdown`). */
   excerpt?: string;
   /** Computed by the apps (posts and photos are local, TIL points at the TIL origin). */
   href: string;
@@ -30,6 +31,14 @@ export interface MonthGroup {
 }
 
 export const TIME_ZONE = 'America/Los_Angeles';
+
+/**
+ * Whether this build shows drafts: only preview builds run with `PUBLIC_SHOW_DRAFTS=true`.
+ * Astro inlines `import.meta.env` at build time; `process.env` covers code running outside Vite.
+ */
+export function showDrafts(): boolean {
+  return (import.meta.env?.PUBLIC_SHOW_DRAFTS ?? process.env.PUBLIC_SHOW_DRAFTS) === 'true';
+}
 
 /** Unlisted entries are never public; drafts are public only while previewing them. */
 export function isPublic(

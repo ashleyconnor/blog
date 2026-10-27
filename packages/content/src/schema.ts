@@ -52,3 +52,6 @@ export function photosSchema<Src extends z.ZodType>({ image }: { image: () => Sr
       .min(1, 'At least one image is required'),
   });
 }
+
+/** Standalone pages (`pages/*.md`, e.g. the InstaBoxd privacy policy): a title and a body. */
+export const pageSchema = z.strictObject({ title: z.string().min(1) });

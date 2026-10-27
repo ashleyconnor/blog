@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { glob } from 'tinyglobby';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { collectionGlobs, defineSharedCollections } from '../src/collections';
+import { collectionGlobs, definePagesCollection, defineSharedCollections } from '../src/collections';
 
 describe('defineSharedCollections', () => {
   it('defines posts, til and photos collections with glob loaders and schemas', () => {
@@ -19,6 +19,14 @@ describe('defineSharedCollections', () => {
     const { photos, posts } = defineSharedCollections('/some/content');
     expect(typeof photos.schema).toBe('function');
     expect(typeof posts.schema).not.toBe('function');
+  });
+});
+
+describe('definePagesCollection', () => {
+  it('is a glob-loaded collection with the page schema', () => {
+    const pages = definePagesCollection('/some/content');
+    expect(pages).toMatchObject({ loader: { name: 'glob-loader' } });
+    expect(pages.schema).toBeDefined();
   });
 });
 
@@ -44,6 +52,8 @@ describe('collection glob patterns', () => {
       'photos/p/readme.md',
       'photos/top.md',
       'photos/p/deeper/index.md',
+      'pages/privacy.md',
+      'pages/nested/other.md',
     ]) {
       mkdirSync(join(root, dirname(file)), { recursive: true });
       writeFileSync(join(root, file), '');
@@ -53,7 +63,7 @@ describe('collection glob patterns', () => {
     rmSync(root, { recursive: true, force: true });
   });
 
-  const match = async (dir: 'posts' | 'til' | 'photos') =>
+  const match = async (dir: keyof typeof collectionGlobs) =>
     (await glob(collectionGlobs[dir], { cwd: join(root, dir) })).sort();
 
   it('posts: top-level .md/.mdx and one-level folder index files only', async () => {
@@ -66,5 +76,9 @@ describe('collection glob patterns', () => {
 
   it('photos: one-level folder index.md only', async () => {
     expect(await match('photos')).toEqual(['p/index.md']);
+  });
+
+  it('pages: top-level .md files only', async () => {
+    expect(await match('pages')).toEqual(['privacy.md']);
   });
 });

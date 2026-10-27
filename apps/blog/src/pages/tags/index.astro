@@ -1,0 +1,34 @@
+---
+import { loadTags } from '@ac/content';
+import BaseLayout from '@ac/ui/components/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import { publicStream } from '../../lib/stream';
+
+const stream = await publicStream();
+const tags = [...loadTags().values()]
+  .map((tag) => ({ ...tag, count: stream.filter((item) => item.tags.includes(tag.slug)).length }))
+  .filter((tag) => tag.count > 0)
+  .sort((a, b) => a.name.localeCompare(b.name, 'en'));
+---
+
+<BaseLayout title="Tags · Ashley Connor" canonical={new URL('/tags/', Astro.site)}>
+  <PageHeader title="Tags" />
+  <ul role="list" class="mt-6 flex flex-wrap gap-2">
+    {
+      tags.map(({ slug, name, count }) => (
+        <li>
+          <a
+            href={`/tags/${slug}/`}
+            class="inline-flex items-baseline gap-2 rounded-full border border-line bg-surface px-3 py-1 text-sm text-text hover:border-muted hover:text-head"
+          >
+            {name}
+            <span class="font-mono text-xs text-muted">
+              {count}
+              <span class="sr-only">{count === 1 ? ' entry' : ' entries'}</span>
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</BaseLayout>
