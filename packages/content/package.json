@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./collections": "./src/collections.ts",
+    "./load-items": "./src/load-items.ts",
     "./sitemap": "./src/sitemap.ts"
   },
   "scripts": {

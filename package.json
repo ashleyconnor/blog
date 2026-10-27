@@ -10,7 +10,8 @@
     "check": "pnpm -r --filter './apps/*' check",
     "lighthouse": "LIGHTHOUSE_PRESET=desktop lhci autorun && LIGHTHOUSE_PRESET=mobile lhci autorun",
     "dev:blog": "pnpm --filter blog dev",
-    "dev:til": "pnpm --filter til dev"
+    "dev:til": "pnpm --filter til dev",
+    "review:check": "node --experimental-strip-types scripts/review-checks.ts"
   },
   "devDependencies": {
     "@ac/ui": "workspace:*",

@@ -1,3 +1,4 @@
+import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { loadItems } from '../src/load-items';
@@ -66,6 +67,23 @@ describe('loadItems', () => {
     expect(byHref('/2025/04/22/draft-post/')).toMatchObject({ draft: true, unlisted: false, tags: ['tools'] });
     expect(byHref('/photos/anza-borrego/')).toMatchObject({ type: 'photos', tags: ['travel'] });
     expect(byHref('/photos/draft-gallery/')).toMatchObject({ type: 'photos', draft: true });
+  });
+
+  it('throws on invalid front matter, or leaves the entry out with skipInvalid', () => {
+    const tmp = join(import.meta.dirname, '../.tmp');
+    mkdirSync(tmp, { recursive: true });
+    const root = mkdtempSync(join(tmp, 'items-'));
+    try {
+      cpSync(fixtures, root, { recursive: true });
+      writeFileSync(join(root, 'posts/broken.md'), '---\ntitle: Broken\n---\n');
+      vi.stubEnv('CONTENT_ROOT', root);
+      expect(() => loadItems()).toThrow(/broken\.md/);
+      const items = loadItems({ skipInvalid: true });
+      expect(items).toHaveLength(13);
+      expect(items.some((i) => i.id === 'broken')).toBe(false);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });
 

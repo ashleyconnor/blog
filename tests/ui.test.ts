@@ -131,7 +131,7 @@ describe('table of contents', () => {
   });
 
   it('only counts depth 2 and 3 headings, so a short post has none', () => {
-    // The advanced post has two h2s and one h4: three headings, but only two in range.
+    // The advanced post has an h2, an h3 and an h4: three headings, but only two in range.
     expect(page(dist, ADVANCED)).not.toMatch(/aria-label="Table of contents"/);
   });
 });
