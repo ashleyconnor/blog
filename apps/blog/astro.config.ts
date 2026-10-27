@@ -13,7 +13,8 @@ export default defineConfig({
   output: 'static',
   site,
   trailingSlash: 'always',
-  build: { format: 'directory' },
+  // The site stylesheet is a few kB: inlined, it costs no render-blocking request before first paint.
+  build: { format: 'directory', inlineStylesheets: 'always' },
   fonts,
   // Expressive Code must come before MDX so it sees the Markdown pipeline first.
   // The sitemap leaves out pages that are built but must not be listed (unlisted, drafts, empty tags).

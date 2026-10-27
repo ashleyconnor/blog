@@ -102,4 +102,5 @@ exclude:
   - pnpm-lock.yaml
   - pnpm-workspace.yaml
   - vitest.config.ts
+  - lighthouserc.cjs
   - .nvmrc

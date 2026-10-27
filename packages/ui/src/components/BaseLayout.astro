@@ -31,6 +31,7 @@ const image = ogImage ? new URL(ogImage, canonical) : undefined;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#0f1629" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
@@ -46,8 +47,10 @@ const image = ogImage ? new URL(ogImage, canonical) : undefined;
     <meta name="twitter:description" content={description} />
     {image && <meta name="twitter:image" content={image} />}
 
+    {/* Preload only what the first paint uses: every preload competes with it for bandwidth. Inter 600
+        only sets bold text inside post prose, so it loads when needed, like JetBrains Mono. */}
     <Font cssVariable="--font-space-grotesk" preload />
-    <Font cssVariable="--font-inter" preload />
+    <Font cssVariable="--font-inter" preload={[{ weight: 400 }, { weight: 500 }]} />
     <Font cssVariable="--font-jetbrains-mono" />
     <slot name="head" />
   </head>

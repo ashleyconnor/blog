@@ -65,7 +65,7 @@ describe('built resume', () => {
   });
 
   it('prints on A4 with a light background, black text and no nav or footer', () => {
-    const print = mediaBlocks(builtCss(), 'print').join('\n');
+    const print = mediaBlocks(builtCss(html), 'print').join('\n');
     expect(print).toMatch(/@page\s*\{[^}]*size:\s*a4/i);
     expect(print).toMatch(/--color-bg:\s*#fff\b/);
     expect(print).toMatch(/--color-text:\s*#000\b/);
@@ -97,12 +97,12 @@ function text(html: string): string {
     .replace(/\s+/g, ' ');
 }
 
-function builtCss(): string {
+/** Every stylesheet the page gets: `_astro/*.css` plus its inline `<style>` blocks (the site stylesheet is inlined). */
+function builtCss(html: string): string {
   const dir = join(dist, '_astro');
-  return readdirSync(dir)
-    .filter((f) => f.endsWith('.css'))
-    .map((f) => readFileSync(join(dir, f), 'utf8'))
-    .join('\n');
+  const files = existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith('.css')) : [];
+  const inline = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]);
+  return [...files.map((f) => readFileSync(join(dir, f), 'utf8')), ...inline].join('\n');
 }
 
 /** Bodies of every `@media <query> { … }` block, matched by brace depth. */

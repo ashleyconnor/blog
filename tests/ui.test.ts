@@ -148,6 +148,32 @@ describe('layout', () => {
     expect(html).toContain('<meta name="twitter:title" content="A basic post">');
   });
 
+  it('inlines the site stylesheet, so first paint waits on no stylesheet request', () => {
+    // The homepage has no code blocks, whose Expressive Code stylesheet is the only one left to link.
+    const home = readFileSync(join(dist, 'index.html'), 'utf8');
+    expect(home).not.toMatch(/<link[^>]*rel="stylesheet"/);
+    expect(home).toMatch(/<style>[^<]*--color-bg:\s*#0f1629/);
+  });
+
+  it('links an SVG favicon that the build ships', () => {
+    // Without one, browsers request /favicon.ico and log its 404 as a console error.
+    expect(page(dist, BASIC)).toContain('<link rel="icon" href="/favicon.svg" type="image/svg+xml">');
+    expect(readFileSync(join(dist, 'favicon.svg'), 'utf8')).toMatch(/^<svg\b/);
+  });
+
+  it('preloads only the fonts of the first paint: Space Grotesk, and Inter 400 and 500', () => {
+    const html = page(dist, BASIC);
+    // Each family's @font-face rules are inlined in <head>: map their files to "<family> <weight>".
+    const faces = new Map(
+      [...html.matchAll(/@font-face\{font-family:"?([A-Za-z ]+?)-[0-9a-f]+"?;src:url\("([^"]+)"\)[^}]*?font-weight:(\d+)/g)].map(
+        ([, family, url, weight]) => [url, `${family} ${weight}`],
+      ),
+    );
+    expect(faces.size).toBe(7);
+    const preloaded = [...html.matchAll(/<link rel="preload" href="([^"]+)" as="font"/g)].map(([, url]) => faces.get(url!));
+    expect(preloaded.sort()).toEqual(['Inter 400', 'Inter 500', 'Space Grotesk 500', 'Space Grotesk 700']);
+  });
+
   it('has site navigation, a centred reading column and the licence footer', () => {
     const html = page(dist, BASIC);
     expect(html).toMatch(/<a[^>]*href="\/posts\/"[^>]*>\s*Posts\s*<\/a>/);

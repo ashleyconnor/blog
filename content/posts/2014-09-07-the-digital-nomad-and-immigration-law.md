@@ -69,7 +69,7 @@ Now that's a pretty lax definition covering almost all human activity imaginable
 
 So as a tourist - if you are working for clients or on your startup then you are **breaking the law**.
 
-#### "I won't get caught"
+### "I won't get caught"
 
 No doubt policing this type of thing is extremely difficult and the majority of illegal remote workers are not caught. As a digital nomad your chances are even better as you are out of the public eye and most of the time not engaged with individuals or businesses in the country.
 
@@ -81,7 +81,7 @@ Imagine if a disgruntled client emailed Thai immigration to report you for worki
 
 You also are publicly and openly admitting to breaking laws, which is a poor reflection on your own character back home. It could prevent you from finding work in the future.
 
-#### "It's not illegal. I don't _live_ there"
+### "It's not illegal. I don't _live_ there"
 
 People are quick to justify why they are not breaking the law. They'll find titbits online that 'prove' they are legal. Not case-law mind, usually quotes from officials.
 
@@ -143,7 +143,7 @@ As always with the law - it's prudent to talk to a lawyer first.
 
 &nbsp;
 
-#### _Edit Log_
+## _Edit Log_
 
 - _Altered title from "The Digital Nomad and Immigration Law" to "Working in Thailand as a Digital Nomad"_
 - _Corrected grammar_
