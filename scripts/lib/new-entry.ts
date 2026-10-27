@@ -163,7 +163,7 @@ export function planEntry(opts: PlanOptions): EntryPlan {
 }
 
 /** Paths whose existence means the entry (or another entry with the same id) already exists. */
-function conflicts(plan: EntryPlan): string[] {
+export function conflicts(plan: EntryPlan): string[] {
   const paths = [plan.file, ...plan.dirs.slice(0, 1)];
   // A post id is taken by either a `<id>.md(x)` file or an `<id>/` folder.
   const parent = dirname(plan.dirs[0] ?? plan.file);

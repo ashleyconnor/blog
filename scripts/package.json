@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@ac/content": "workspace:*",
+    "@clack/prompts": "1.7.0",
     "github-slugger": "2.0.0",
     "yaml": "2.9.1"
   },
