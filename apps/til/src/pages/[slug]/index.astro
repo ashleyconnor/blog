@@ -1,0 +1,65 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { getCollection, render } from 'astro:content';
+import { formatDate } from '@ac/content';
+import BaseLayout from '@ac/ui/components/BaseLayout.astro';
+import Prose from '@ac/ui/components/Prose.astro';
+import TypePill from '@ac/ui/components/TypePill.astro';
+import TilNav from '../../components/TilNav.astro';
+import { BLOG_ORIGIN, TIL_DESCRIPTION, tilPath } from '../../site';
+
+// Unlisted TILs are built (reachable by URL); drafts only when previewing them.
+export const getStaticPaths = (async () => {
+  const showDrafts = import.meta.env.PUBLIC_SHOW_DRAFTS === 'true';
+  const tils = await getCollection('til', ({ data }) => showDrafts || !data.draft);
+  return tils.map((til) => ({ params: { slug: til.id }, props: { til } }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { til } = Astro.props;
+const { title, date, updated, tags, excerpt, draft } = til.data;
+const { Content } = await render(til);
+---
+
+<BaseLayout
+  title={title}
+  description={excerpt || TIL_DESCRIPTION}
+  canonical={new URL(tilPath(til.id), Astro.site)}
+  draft={draft}
+>
+  <TilNav slot="nav" />
+  <article class="py-10">
+    <header class="mb-8">
+      <TypePill type="til" />
+      <h1 class="mt-3 mb-2 font-heading text-3xl leading-[1.15] font-bold text-head md:text-4xl">{title}</h1>
+      <p class="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-muted">
+        <time datetime={date.toISOString()}>{formatDate(date)}</time>
+        {
+          updated && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span>
+                Updated <time datetime={updated.toISOString()}>{formatDate(updated)}</time>
+              </span>
+            </>
+          )
+        }
+        {
+          tags.map((tag) => (
+            <>
+              <span aria-hidden="true">·</span>
+              <a
+                href={`${BLOG_ORIGIN}/tags/${tag}/`}
+                class="text-muted underline-offset-4 hover:text-head hover:underline"
+              >
+                #{tag}
+              </a>
+            </>
+          ))
+        }
+      </p>
+    </header>
+    <Prose><Content /></Prose>
+  </article>
+</BaseLayout>

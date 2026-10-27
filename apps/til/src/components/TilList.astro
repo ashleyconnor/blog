@@ -1,0 +1,44 @@
+---
+import { TIME_ZONE, type MonthGroup } from '@ac/content';
+import TypeIcon from '@ac/ui/components/TypeIcon.astro';
+
+interface Props {
+  groups: MonthGroup[];
+}
+
+const { groups } = Astro.props;
+
+// The day of the month in Los Angeles, matching the month grouping.
+const dayOf = new Intl.DateTimeFormat('en-US', { timeZone: TIME_ZONE, day: '2-digit' });
+---
+
+{
+  groups.map((group) => (
+    <section aria-labelledby={`month-${group.key}`}>
+      <h2
+        id={`month-${group.key}`}
+        class="mt-6 mb-1 border-b border-line pb-2 font-mono text-xs font-medium tracking-[0.06em] text-muted uppercase"
+      >
+        {group.label}
+      </h2>
+      <ul>
+        {group.items.map((item) => (
+          <li class="grid grid-cols-[22px_1fr_auto] items-start gap-3 py-4">
+            <span class="grid size-[22px] place-items-center rounded-md bg-surface">
+              <TypeIcon type="til" class="size-3.5" />
+            </span>
+            <a
+              href={item.href}
+              class="text-[15.5px] leading-snug font-medium text-head underline-offset-4 hover:underline"
+            >
+              {item.title}
+            </a>
+            <time datetime={item.date.toISOString()} class="pt-[3px] font-mono text-xs text-muted">
+              {dayOf.format(item.date)}
+            </time>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))
+}

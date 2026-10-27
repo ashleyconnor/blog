@@ -1,0 +1,59 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { getCollection } from 'astro:content';
+import { buildStream, groupByMonth, type StreamItem } from '@ac/content';
+import BaseLayout from '@ac/ui/components/BaseLayout.astro';
+import TilList from '../components/TilList.astro';
+import TilNav from '../components/TilNav.astro';
+import { TIL_DESCRIPTION, tilPath } from '../site';
+
+// Every public TIL, newest first: page 1 at `/`, then `/2/`, `/3/`…
+export const getStaticPaths = (async ({ paginate }) => {
+  const showDrafts = import.meta.env.PUBLIC_SHOW_DRAFTS === 'true';
+  const items: StreamItem[] = (await getCollection('til')).map(({ id, data }) => ({
+    type: 'til',
+    id,
+    title: data.title,
+    date: data.date,
+    tags: data.tags,
+    excerpt: data.excerpt,
+    href: tilPath(id),
+    advanced: false,
+    draft: data.draft,
+    unlisted: data.unlisted,
+  }));
+  return paginate(buildStream(items, { showDrafts }), { pageSize: 30 });
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { page } = Astro.props;
+const title = page.currentPage === 1 ? "Ashley Connor's TIL" : `Ashley Connor's TIL · Page ${page.currentPage}`;
+---
+
+<BaseLayout title={title} description={TIL_DESCRIPTION} canonical={new URL(page.url.current, Astro.site)}>
+  <TilNav slot="nav" />
+  <header class="pt-10 pb-2">
+    <h1 class="font-heading text-3xl leading-[1.15] font-bold text-head md:text-4xl">Today I Learned</h1>
+    <p class="mt-2 text-muted">{TIL_DESCRIPTION}</p>
+  </header>
+  <TilList groups={groupByMonth(page.data)} />
+  {
+    (page.url.prev || page.url.next) && (
+      <nav aria-label="Pagination" class="mt-8 flex justify-between text-sm">
+        {page.url.prev ? (
+          <a href={page.url.prev} class="text-muted hover:text-head">
+            ← Newer
+          </a>
+        ) : (
+          <span />
+        )}
+        {page.url.next && (
+          <a href={page.url.next} class="text-muted hover:text-head">
+            Older →
+          </a>
+        )}
+      </nav>
+    )
+  }
+</BaseLayout>
