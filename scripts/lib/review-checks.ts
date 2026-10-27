@@ -26,6 +26,7 @@ const STATIC_ROUTES = [
   '/',
   '/posts/',
   '/photos/',
+  '/tags/',
   '/resume/',
   '/instaboxd/privacy/',
   '/feed.xml',
@@ -306,8 +307,8 @@ function checkLinks(source: Source, file: string): Finding[] {
   };
   // [text](dest), ![alt](dest)
   for (const m of source.proseText.matchAll(/!?\[[^\]]*\]\(\s*(<[^>\n]*>|[^)\s]+)/g)) add(m.index, m[1]);
-  // [ref]: dest
-  for (const m of source.proseText.matchAll(/^ {0,3}\[[^\]]+\]:\s*(<[^>\n]*>|\S+)/gm)) add(m.index, m[1]);
+  // [ref]: dest (not GFM footnote definitions, `[^1]: text`)
+  for (const m of source.proseText.matchAll(/^ {0,3}\[(?!\^)[^\]]+\]:\s*(<[^>\n]*>|\S+)/gm)) add(m.index, m[1]);
   // href="dest", src='dest' in HTML/JSX tags
   for (const m of source.proseText.matchAll(/\s(?:href|src)\s*=\s*(?:"([^"]*)"|'([^']*)')/g)) add(m.index, m[1] ?? m[2]);
   destinations.sort((a, b) => a.offset - b.offset);

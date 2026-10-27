@@ -3,24 +3,11 @@
  * `file:line [rule] message` line per finding and exits 1 when there are any, 0 when the files
  * are clean, and 2 when a file cannot be read (or none is given). See `lib/review-checks.ts`.
  */
-import { registerHooks } from 'node:module';
+import './lib/ts-resolve-hook.ts';
 import { resolve } from 'node:path';
 
-// `@ac/content` imports its own modules without extensions (Vite and Astro resolve those); plain
-// Node does not, so retry a failed relative import with `.ts` appended.
-registerHooks({
-  resolve(specifier, context, nextResolve) {
-    try {
-      return nextResolve(specifier, context);
-    } catch (error) {
-      if (/^\.\.?\//.test(specifier) && !/\.[cm]?[jt]sx?$/.test(specifier)) {
-        return nextResolve(`${specifier}.ts`, context);
-      }
-      throw error;
-    }
-  },
-});
-
+// Static imports are all resolved before any module runs, so the library (and `@ac/content`)
+// is imported dynamically, after the resolve hook above is registered.
 const { checkEntry } = await import('./lib/review-checks.ts');
 
 const files = process.argv.slice(2);

@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, globSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { checkEntry } from '../lib/review-checks.ts';
@@ -207,6 +207,22 @@ describe('checkEntry: link', () => {
     ]);
     expect(findings[0]!.message).toContain('/tags/nope/');
     expect(findings[2]!.message).toContain('./missing.png');
+  });
+
+  it('accepts every non-dynamic page the blog app builds', () => {
+    const pages = join(import.meta.dirname, '../../apps/blog/src/pages');
+    const routes = globSync(['**/index.astro', '**/*.xml.ts'], { cwd: pages })
+      .filter((file) => !file.includes('['))
+      .map((file) => `/${file.replace(/(?:^|\/)index\.astro$/, '/').replace(/\.ts$/, '')}`.replace(/\/+/g, '/'));
+    expect(routes).toContain('/tags/');
+    expect(routes).toContain('/posts/feed.xml');
+    const file = post(routes.map((route, i) => `[page ${i}](${route})`).join('\n'));
+    expect(checkEntry(file)).toEqual([]);
+  });
+
+  it('does not read GFM footnote definitions as reference links', () => {
+    const file = post('A claim.[^1]\n\n[^1]: The source, from a book.\n\n[ref]: ./missing.png');
+    expect(checkEntry(file)).toEqual([{ rule: 'link', line: 11, message: expect.stringContaining('./missing.png') }]);
   });
 
   it('checks site-relative links in TILs against blog routes', () => {
