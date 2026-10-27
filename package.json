@@ -11,7 +11,8 @@
     "lighthouse": "LIGHTHOUSE_PRESET=desktop lhci autorun && LIGHTHOUSE_PRESET=mobile lhci autorun",
     "dev:blog": "pnpm --filter blog dev",
     "dev:til": "pnpm --filter til dev",
-    "new": "node --experimental-strip-types scripts/new.ts"
+    "new": "node --experimental-strip-types scripts/new.ts",
+    "review:check": "node --experimental-strip-types scripts/review-checks.ts"
   },
   "devDependencies": {
     "@ac/ui": "workspace:*",
