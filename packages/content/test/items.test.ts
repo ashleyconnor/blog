@@ -82,6 +82,11 @@ describe('postItem', () => {
     const item = postItem({ id: 'x', data: data({ draft: true, unlisted: true }) });
     expect(item).toMatchObject({ draft: true, unlisted: true });
   });
+
+  it('keeps legacy URLs, for the redirects', () => {
+    const item = postItem({ id: 'x', data: data({ legacyUrls: ['/2025/04/24/x.html'] }) });
+    expect(item.legacyUrls).toEqual(['/2025/04/24/x.html']);
+  });
 });
 
 describe('tilItem', () => {

@@ -3,6 +3,9 @@ title: A basic post
 date: "2025-04-23T19:39:00-07:00"
 tags: [python]
 excerpt: A plain Markdown post used to exercise typography, code blocks and the table of contents.
+# Jekyll dated URLs in UTC, like the real async-Python post.
+legacyUrls:
+  - /2025/04/24/basic-post.html
 ---
 
 Calling async code from sync code is still awkward. Here is [what I tried](https://example.com/) and why it should be built in, with some `inline code` for good measure.

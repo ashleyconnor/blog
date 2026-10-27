@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://www.ashleyconnor.co.uk/sitemap-index.xml

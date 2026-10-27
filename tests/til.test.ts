@@ -2,7 +2,8 @@ import { execa } from 'execa';
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { loadItems } from '../packages/content/src/load-items';
 
 const root = join(import.meta.dirname, '..');
 
@@ -259,5 +260,63 @@ describe('fonts', () => {
         expect(fakeBold, classes).toBe(false);
       }
     }
+  });
+});
+
+describe('feed, sitemap and robots', () => {
+  const file = (outDir: string, name: string) => readFileSync(join(outDir, name), 'utf8');
+  /** Text of every `sitemap-*.xml`, the index included. */
+  const sitemapText = (outDir: string) =>
+    readdirSync(outDir)
+      .filter((name) => /^sitemap-.*\.xml$/.test(name))
+      .map((name) => file(outDir, name))
+      .join('\n');
+
+  it('has its own feed of public TILs, linking to the TIL origin', () => {
+    const xml = file(dist, 'feed.xml');
+    expect(xml).toMatch(/<channel><title>Ashley Connor(?:'|&apos;)s TIL<\/title>/);
+    expect(xml).toContain(`<link>${ORIGIN}/</link>`);
+    expect(xml).toContain(`<link>${ORIGIN}/${READ_FILE}/</link>`);
+    expect(xml).toContain(
+      '<description>Use File.read!/1 when a missing file is a bug, File.read/1 when it is expected.</description>',
+    );
+    for (const hidden of [DRAFT, UNLISTED, 'A draft TIL', 'An unlisted TIL']) expect(xml).not.toContain(hidden);
+    // Only TILs: blog posts and photos have their own feeds on the blog.
+    expect(xml).not.toContain('A basic post');
+  });
+
+  it('has its own sitemap, without unlisted entries or drafts', () => {
+    const text = sitemapText(dist);
+    expect(text).toContain(`<loc>${ORIGIN}/</loc>`);
+    expect(text).toContain(`<loc>${ORIGIN}/${READ_FILE}/</loc>`);
+    expect(text).not.toContain(UNLISTED);
+    expect(existsSync(join(dist, UNLISTED, 'index.html'))).toBe(true);
+    expect(text).not.toContain(BLOG);
+    expect(text).not.toContain(`${ORIGIN}/404`);
+
+    expect(existsSync(join(draftDist, DRAFT, 'index.html'))).toBe(true);
+    expect(sitemapText(draftDist)).not.toContain(DRAFT);
+    expect(sitemapText(draftDist)).toContain(`<loc>${ORIGIN}/${READ_FILE}/</loc>`);
+  });
+
+  // The sitemap filter reads content outside Astro (loadItems): its TIL URLs must be the pages built here.
+  it("the sitemap filter's TIL URLs are the pages the build generates", () => {
+    vi.stubEnv('CONTENT_ROOT', join(root, 'tests/fixtures/content'));
+    const tils = loadItems().filter((item) => item.type === 'til');
+    vi.unstubAllEnvs();
+    const hrefs = tils.map((item) => item.href);
+    expect(hrefs).toEqual(expect.arrayContaining([`${ORIGIN}/${UNLISTED}/`, `${ORIGIN}/${DRAFT}/`]));
+    for (const { href, draft } of tils) {
+      expect(href.startsWith(`${ORIGIN}/`), href).toBe(true);
+      const path = new URL(href).pathname;
+      if (!draft) expect(existsSync(join(dist, path, 'index.html')), href).toBe(true);
+      expect(existsSync(join(draftDist, path, 'index.html')), href).toBe(true);
+    }
+  });
+
+  it('robots.txt points at the TIL sitemap', () => {
+    const robots = file(dist, 'robots.txt');
+    expect(robots).toMatch(/^User-agent: \*$/m);
+    expect(robots).toContain(`Sitemap: ${ORIGIN}/sitemap-index.xml`);
   });
 });

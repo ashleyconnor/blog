@@ -12,9 +12,15 @@ async function allItems(): Promise<StreamItem[]> {
 }
 
 /**
- * What the stream, type indexes and tag pages list: public entries newest first. Unlisted
+ * What the stream, type indexes, tag pages and feeds list: public entries newest first. Unlisted
  * entries never appear; drafts only in preview builds (`PUBLIC_SHOW_DRAFTS=true`).
  */
 export async function publicStream(): Promise<StreamItem[]> {
   return buildStream(await allItems(), { showDrafts: showDrafts() });
+}
+
+/** Every entry whose page this build generates: unlisted ones too, drafts only in preview builds. */
+export async function builtItems(): Promise<StreamItem[]> {
+  const drafts = showDrafts();
+  return (await allItems()).filter((item) => drafts || !item.draft);
 }
