@@ -10,15 +10,19 @@ export interface RedirectEntry {
 }
 
 /**
- * Old URLs no entry owns. `/til/index` must come before the `/til/*` wildcard, which would otherwise
- * send it to `<TIL_ORIGIN>/index`. Jekyll's `/page2/` goes to the homepage: its page size differed,
- * so the old page 2 never matched the new one (which may not exist at all).
+ * Old URLs no entry owns. `/til` (the Jekyll nav's link, with no trailing slash) is not matched by the
+ * `/til/*` wildcard, so it gets its own rule. `/til/index` must come before the wildcard, which would
+ * otherwise send it to `<TIL_ORIGIN>/index`. Jekyll's `/page2/` goes to the homepage: its page size
+ * differed, so the old page 2 never matched the new one (which may not exist at all). jekyll-sitemap
+ * wrote `/sitemap.xml`; @astrojs/sitemap writes `/sitemap-index.xml` instead.
  */
 const STATIC_RULES = [
+  `/til ${TIL_ORIGIN}/ 301`,
   `/til/index ${TIL_ORIGIN}/ 301`,
   `/til/* ${TIL_ORIGIN}/:splat 301`,
   '/page2/ / 301',
   '/assets/pdfs/resume.pdf /resume.pdf 301',
+  '/sitemap.xml /sitemap-index.xml 301',
 ];
 
 // Grouped by type so the explicit TIL rules sit just above the TIL wildcard.
