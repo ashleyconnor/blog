@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@source "../";
 
 @theme {
   --color-bg: #0f1629;
@@ -12,7 +13,11 @@
   --color-photo: #f0b86e;
 }
 
-/* --font-heading/body/mono are defined on :root by the Astro Fonts API (with fallbacks); do not redeclare them in @theme (self-referencing cycle). */
+@theme inline {
+  --font-heading: var(--font-space-grotesk);
+  --font-body: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+}
 
 @layer base {
   html {

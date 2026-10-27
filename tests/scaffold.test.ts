@@ -18,6 +18,7 @@ describe('scaffold', () => {
       .join('\n');
     expect(css).toContain('#0f1629');
     expect(css).toContain('--font-heading');
+    expect(css).toContain('.font-heading');
 
     const html = readFileSync(join(dist, 'index.html'), 'utf8');
     expect(html).toContain('<meta name="color-scheme" content="dark">');
