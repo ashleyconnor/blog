@@ -1,0 +1,30 @@
+---
+title: An advanced post
+date: "2025-02-10T10:00:00-08:00"
+tags: [tools]
+excerpt: An MDX post with a figure and a callout.
+---
+
+import Figure from '@ac/ui/components/Figure.astro';
+import Callout from '@ac/ui/components/Callout.astro';
+import diagram from './diagram.png';
+
+Components can be dropped straight into the prose.
+
+## A figure
+
+<Figure src={diagram} alt="A blue gradient standing in for a diagram" caption="Figure 1 — Event loop, simplified" />
+
+<Figure src={diagram} alt="The same gradient, allowed to break out of the column" caption="Figure 2 — A wide figure" wide />
+
+<Callout type="warning">
+Do not call `run_sync` from inside a running loop.
+</Callout>
+
+## Headings that do not count
+
+Only two second-level headings and one fourth-level heading, so no table of contents.
+
+#### Too deep for the table of contents
+
+Done.

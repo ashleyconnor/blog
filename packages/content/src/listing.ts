@@ -29,7 +29,7 @@ export interface MonthGroup {
   items: StreamItem[];
 }
 
-const TIME_ZONE = 'America/Los_Angeles';
+export const TIME_ZONE = 'America/Los_Angeles';
 
 /** Unlisted entries are never public; drafts are public only while previewing them. */
 export function isPublic(

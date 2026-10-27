@@ -1,19 +1,7 @@
 ---
-import { Font } from 'astro:assets';
-import '@ac/ui/styles/global.css';
+import BaseLayout from '@ac/ui/components/BaseLayout.astro';
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="dark" />
-    <title>Ashley Connor</title>
-    <Font cssVariable="--font-space-grotesk" preload />
-    <Font cssVariable="--font-inter" preload />
-    <Font cssVariable="--font-jetbrains-mono" />
-  </head>
-  <body>
-    <h1 class="font-heading">Ashley Connor</h1>
-  </body>
-</html>
+<BaseLayout title="Ashley Connor" canonical={new URL('/', Astro.site)}>
+  <h1 class="font-heading">Ashley Connor</h1>
+</BaseLayout>
