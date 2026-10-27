@@ -176,6 +176,12 @@ describe('stream rows', () => {
     expect(page(dist, '')).toContain('href="https://til.ashleyconnor.co.uk/2025-03-01-auto-activate-a-venv-with-direnv/"');
   });
 
+  it('only rows that leave the site, the TIL rows, show the outbound arrow', () => {
+    const list = rows(page(dist, ''));
+    expect(new Set(list.map((r) => r.type))).toEqual(new Set(['post', 'til', 'photos']));
+    for (const { type, body } of list) expect(body.includes('↗'), `${type}: ${text(body)}`).toBe(type === 'til');
+  });
+
   it('post rows show a plain-text excerpt and reading time', () => {
     const row = text(rowFor(page(dist, ''), ADVANCED.title)!.body);
     expect(row).toMatch(/An MDX post with a figure and a callout\. · \d+ min/);

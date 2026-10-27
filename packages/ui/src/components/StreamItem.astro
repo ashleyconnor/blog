@@ -10,6 +10,9 @@ interface Props {
 
 const { type, title, href, date, excerpt, minutes, advanced, draft, thumbs = [], extraCount = 0 } = Astro.props.item;
 
+// An absolute href leaves the site (TIL rows on the blog), so it gets an outbound arrow.
+const outbound = /^https?:/.test(href);
+
 // Small mono labels: "Interactive" for advanced posts, "Draft" in preview builds.
 const labels = [
   advanced && { text: 'Interactive', class: 'text-post' },
@@ -35,7 +38,7 @@ const labels = [
         class="text-head decoration-muted underline-offset-4 group-hover:underline after:absolute after:inset-0 focus-visible:underline"
       >
         <span class="sr-only">{entryTypes[type].label}: </span>
-        {title}{type === 'til' && <span aria-hidden="true" class="ml-1 text-til">↗</span>}
+        {title}{outbound && <span aria-hidden="true" class="ml-1 text-til">↗</span>}
       </a>
     </h3>
     {

@@ -1,7 +1,7 @@
 ---
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
 import { getCollection, render } from 'astro:content';
-import { formatDate } from '@ac/content';
+import { formatDate, showDrafts } from '@ac/content';
 import BaseLayout from '@ac/ui/components/BaseLayout.astro';
 import Prose from '@ac/ui/components/Prose.astro';
 import TypePill from '@ac/ui/components/TypePill.astro';
@@ -10,8 +10,8 @@ import { BLOG_ORIGIN, TIL_DESCRIPTION, tilPath } from '../../site';
 
 // Unlisted TILs are built (reachable by URL); drafts only when previewing them.
 export const getStaticPaths = (async () => {
-  const showDrafts = import.meta.env.PUBLIC_SHOW_DRAFTS === 'true';
-  const tils = await getCollection('til', ({ data }) => showDrafts || !data.draft);
+  const drafts = showDrafts();
+  const tils = await getCollection('til', ({ data }) => drafts || !data.draft);
   return tils.map((til) => ({ params: { slug: til.id }, props: { til } }));
 }) satisfies GetStaticPaths;
 

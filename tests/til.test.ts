@@ -1,28 +1,69 @@
 import { execa } from 'execa';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { loadItems } from '../packages/content/src/load-items';
 
 const root = join(import.meta.dirname, '..');
+const fixtures = join(root, 'tests/fixtures/content');
 
 let dist: string;
 let draftDist: string;
+let pagedDist: string;
+let pagedContent: string;
 
-/** Builds the TIL site against the fixture content into `outDir`. */
-async function build(outDir: string, showDrafts: boolean) {
+/** Builds the TIL site against `contentRoot` (the fixtures by default) into `outDir`. */
+async function build(outDir: string, showDrafts: boolean, contentRoot = fixtures) {
   await execa('pnpm', ['--filter', 'til', 'exec', 'astro', 'build', '--force', '--outDir', outDir], {
     cwd: root,
     env: {
-      CONTENT_ROOT: 'tests/fixtures/content',
+      CONTENT_ROOT: contentRoot,
       PUBLIC_SHOW_DRAFTS: showDrafts ? 'true' : 'false',
     },
   });
 }
 
+/** The public TIL fixtures: every one but the draft and the unlisted entry. */
+const PUBLIC_FIXTURES = 5;
+
+/**
+ * The fixtures plus enough TILs to need a second index page (30 per page), as blog-pages.test.ts
+ * does for the blog. The MDX post is left out: its `@ac/ui` imports only resolve from inside the
+ * repository, and this copy lives in tmpdir.
+ */
+function pagedFixtures(): string {
+  const dir = mkdtempSync(join(tmpdir(), 'ac-til-paged-content-'));
+  cpSync(fixtures, dir, { recursive: true, filter: (src) => !src.endsWith(join('advanced-post', 'index.mdx')) });
+  for (let day = 1; day <= 30; day++) {
+    const dd = String(day).padStart(2, '0');
+    writeFileSync(
+      join(dir, 'til', `2024-01-${dd}-extra-til-${dd}.md`),
+      `---\ntitle: Extra TIL ${dd}\ndate: "2024-01-${dd}T12:00:00-08:00"\ntags: [tools]\n---\n\nFiller.\n`,
+    );
+  }
+  return dir;
+}
+
 /** `index.html` of a directory-format route; `''` is the site root. */
 const page = (outDir: string, path: string) => readFileSync(join(outDir, path, 'index.html'), 'utf8');
+
+/** Text of every `sitemap-*.xml`, the index included. */
+const sitemapText = (outDir: string) =>
+  readdirSync(outDir)
+    .filter((name) => /^sitemap-.*\.xml$/.test(name))
+    .map((name) => readFileSync(join(outDir, name), 'utf8'))
+    .join('\n');
+
+/** The stream rows (`<li data-type="til">`, the shared `@ac/ui` row) of an index page. */
+const rows = (html: string) => [...html.matchAll(/<li[^>]*data-type="til"[^>]*>[\s\S]*?<\/li>/g)].map(([row]) => row);
+
+/** Text content of the HTML fragment, whitespace collapsed. */
+const text = (html: string) =>
+  html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 const ORIGIN = 'https://til.ashleyconnor.co.uk';
 const BLOG = 'https://www.ashleyconnor.co.uk';
@@ -39,12 +80,15 @@ const UNLISTED = '2025-02-05-til-unlisted-entry';
 beforeAll(async () => {
   dist = mkdtempSync(join(tmpdir(), 'ac-til-dist-'));
   draftDist = mkdtempSync(join(tmpdir(), 'ac-til-drafts-'));
+  pagedDist = mkdtempSync(join(tmpdir(), 'ac-til-paged-'));
+  pagedContent = pagedFixtures();
   await build(dist, false);
   await build(draftDist, true);
+  await build(pagedDist, false, pagedContent);
 }, 300_000);
 
 afterAll(() => {
-  for (const dir of [dist, draftDist]) if (dir) rmSync(dir, { recursive: true, force: true });
+  for (const dir of [dist, draftDist, pagedDist, pagedContent]) if (dir) rmSync(dir, { recursive: true, force: true });
 });
 
 /** Every stylesheet the TIL site ships: `_astro/*.css` plus inline `<style>` blocks of the given page. */
@@ -187,7 +231,7 @@ describe('TIL index', () => {
     expect(section?.month).toBe('February 2025');
     const row = rowFor(section!.body, LATE);
     expect(row, 'no row for the late entry').toBeDefined();
-    expect(row).toMatch(/<time[^>]*>\s*28\s*<\/time>/);
+    expect(row).toMatch(/<time[^>]*>\s*<span aria-hidden="true">28<\/span><span class="sr-only">28 Feb 2025<\/span>\s*<\/time>/);
   });
 
   it('rows show a teal TIL icon, the title and the day', () => {
@@ -196,7 +240,19 @@ describe('TIL index', () => {
     expect(row, 'no row for the entry').toBeDefined();
     expect(row).toMatch(/<svg[^>]*class="[^"]*\btext-til\b/);
     expect(row).toMatch(/>\s*Reading a file in Elixir\s*</);
-    expect(row).toMatch(/<time datetime="2025-04-12T16:00:00\.000Z"[^>]*>\s*12\s*<\/time>/);
+    expect(row).toMatch(
+      /<time datetime="2025-04-12T16:00:00\.000Z"[^>]*>\s*<span aria-hidden="true">12<\/span><span class="sr-only">12 Apr 2025<\/span>\s*<\/time>/,
+    );
+  });
+
+  it('uses the shared stream rows, linking to entries on this site with no outbound arrow', () => {
+    const list = rows(page(dist, ''));
+    expect(list).toHaveLength(PUBLIC_FIXTURES);
+    for (const row of list) {
+      expect(row).toMatch(/<a[^>]*href="\/[^"/]+\/"/);
+      // The arrow marks rows that leave the site, like TIL rows on the blog; these stay here.
+      expect(row).not.toContain('↗');
+    }
   });
 
   it('has a heading and the TIL tagline, in the centred column', () => {
@@ -215,6 +271,30 @@ describe('TIL index', () => {
       expect(html).not.toContain(`/${id}/`);
       expect(html).not.toContain(title);
     }
+  });
+});
+
+describe('TIL index pagination', () => {
+  it('serves page 1 at / and page 2 at /page/2/, linked both ways', () => {
+    const first = page(pagedDist, '');
+    const second = page(pagedDist, 'page/2');
+    expect(rows(first)).toHaveLength(30);
+    // The public TIL fixtures and 30 extra TILs: 30 on page 1, the rest here.
+    expect(rows(second)).toHaveLength(PUBLIC_FIXTURES);
+    expect(existsSync(join(pagedDist, '2/index.html'))).toBe(false);
+    expect(first).toMatch(/<a[^>]*href="\/page\/2\/"[^>]*rel="next"|<a[^>]*rel="next"[^>]*href="\/page\/2\/"/);
+    expect(second).toMatch(/<a[^>]*href="\/"[^>]*rel="prev"|<a[^>]*rel="prev"[^>]*href="\/"/);
+    expect(text(second)).toContain('Page 2 of 2');
+    expect(second).toContain(`<link rel="canonical" href="${ORIGIN}/page/2/">`);
+  });
+
+  it('lists page 2 in the sitemap at /page/2/', () => {
+    expect(sitemapText(pagedDist)).toContain(`<loc>${ORIGIN}/page/2/</loc>`);
+    expect(sitemapText(pagedDist)).not.toContain(`<loc>${ORIGIN}/2/</loc>`);
+  });
+
+  it('has no pager when everything fits on one page', () => {
+    expect(page(dist, '')).not.toMatch(/aria-label="Pagination"/);
   });
 });
 
@@ -272,12 +352,6 @@ describe('fonts', () => {
 
 describe('feed, sitemap and robots', () => {
   const file = (outDir: string, name: string) => readFileSync(join(outDir, name), 'utf8');
-  /** Text of every `sitemap-*.xml`, the index included. */
-  const sitemapText = (outDir: string) =>
-    readdirSync(outDir)
-      .filter((name) => /^sitemap-.*\.xml$/.test(name))
-      .map((name) => file(outDir, name))
-      .join('\n');
 
   it('has its own feed of public TILs, linking to the TIL origin', () => {
     const xml = file(dist, 'feed.xml');
