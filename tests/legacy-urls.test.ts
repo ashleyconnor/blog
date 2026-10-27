@@ -124,6 +124,13 @@ describe('legacy URLs', () => {
     expect(landing('/2014/09/07/the-digital-nomad-and-immigration-law.html')).toBe(
       'blog /2014/09/07/the-digital-nomad-and-immigration-law/',
     );
+    // Its older aliases (the post's `legacyUrls`), which the Jekyll sitemap never listed.
+    expect(landing('/blog/2014/09/07/the-digital-nomad-and-immigration-law/')).toBe(
+      'blog /2014/09/07/the-digital-nomad-and-immigration-law/',
+    );
+    expect(landing('/blog/2014/09/07/working-in-thailand-as-a-digital-nomad/')).toBe(
+      'blog /2014/09/07/the-digital-nomad-and-immigration-law/',
+    );
     expect(landing('/2025/04/24/pythons-async-gap-why-the-standard-library-needs-a-run-sync.html')).toBe(
       'blog /2025/04/23/pythons-async-gap-why-the-standard-library-needs-a-run-sync/',
     );
