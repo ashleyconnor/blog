@@ -163,7 +163,7 @@ export function planEntry(opts: PlanOptions): EntryPlan {
 }
 
 /** Paths whose existence means the entry (or another entry with the same id) already exists. */
-export function conflicts(plan: EntryPlan): string[] {
+function conflicts(plan: EntryPlan): string[] {
   const paths = [plan.file, ...plan.dirs.slice(0, 1)];
   // A post id is taken by either a `<id>.md(x)` file or an `<id>/` folder.
   const parent = dirname(plan.dirs[0] ?? plan.file);
@@ -216,4 +216,20 @@ export function appendTag(tagsFile: string, tag: { slug: string; name: string })
   const parsed = parseTags(text + addition, tagsFile).get(tag.slug);
   if (parsed?.name !== tag.name) throw new Error(`Tag "${tag.slug}" did not round-trip through YAML`);
   appendFileSync(tagsFile, addition);
+}
+
+/**
+ * The write step of `pnpm new`, run only after the last prompt. Checks that the entry is free
+ * before touching anything, so a refused entry leaves `tags.yml` byte-identical; then appends any
+ * new tags and writes the entry.
+ */
+export function createEntry(
+  plan: EntryPlan,
+  template: { dir: string },
+  opts: { tagsFile: string; newTags?: { slug: string; name: string }[]; images?: string[] },
+): void {
+  const taken = conflicts(plan).find((path) => existsSync(path));
+  if (taken) throw new Error(`${taken} already exists; not overwriting it`);
+  for (const tag of opts.newTags ?? []) appendTag(opts.tagsFile, tag);
+  writeEntry(plan, template, opts.images ?? []);
 }

@@ -4,12 +4,15 @@
 //
 // Prompts for whatever the flags leave out; with every value given it asks nothing. Nothing is
 // written until the last prompt is answered, so Ctrl-C at any prompt leaves the content untouched.
-// Afterwards, unless --no-open, it opens the new file in $EDITOR and runs the site's dev server
-// with drafts shown.
+// "Advanced post?" is asked only for posts, without --advanced, in a run that is already prompting
+// for something else: `--type post --title … --tags …` makes a basic post with no questions.
+// Afterwards, unless --no-open, it opens the new file in $EDITOR (GUI editors only; a terminal
+// editor would fight the dev server for the terminal) and runs the site's dev server with drafts
+// shown.
 import './lib/ts-resolve-hook.ts';
 import { spawn } from 'node:child_process';
 import { existsSync, readdirSync, statSync } from 'node:fs';
-import { dirname, extname, join, resolve } from 'node:path';
+import { basename, dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import * as prompts from '@clack/prompts';
@@ -23,15 +26,32 @@ const TYPE_LABELS: Record<EntryType, string> = { post: 'Blog post', til: 'TIL', 
 const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.avif', '.gif', '.tiff']);
 const PORTS = { blog: 4321, til: 4322 } as const;
 
+const TERMINAL_EDITORS = new Set([
+  'vi', 'vim', 'nvim', 'nano', 'pico', 'micro', 'hx', 'helix', 'kak', 'joe', 'ne', 'ed',
+]);
+const EMACS_TTY_FLAGS = new Set(['-nw', '-t', '--tty']);
+
 interface Command {
   command: string;
   args: string[];
 }
 
-/** The editor to open `file` in: $EDITOR, else $VISUAL (either may carry arguments). */
-export function editorCommand(env: NodeJS.ProcessEnv, file: string): Command | undefined {
+/** Whether an editor runs in the terminal (and so can't share it with the dev server). */
+export function isTerminalEditor(command: string, args: string[]): boolean {
+  const name = basename(command);
+  if (TERMINAL_EDITORS.has(name)) return true;
+  return (name === 'emacs' || name === 'emacsclient') && args.some((arg) => EMACS_TTY_FLAGS.has(arg));
+}
+
+/** The editor to open `file` in (either variable may carry arguments). */
+export function editorCommand(
+  env: NodeJS.ProcessEnv,
+  file: string,
+): (Command & { terminal: boolean }) | undefined {
+  // $EDITOR before $VISUAL is deliberate: the authoring brief asks for it.
   const [command, ...args] = (env.EDITOR?.trim() || env.VISUAL?.trim() || '').split(/\s+/);
-  return command ? { command, args: [...args, file] } : undefined;
+  if (!command) return undefined;
+  return { command, args: [...args, file], terminal: isTerminalEditor(command, args) };
 }
 
 /** The dev server for an app, with drafts shown. */
@@ -214,10 +234,7 @@ async function main(argv: string[]): Promise<void> {
   const template = templates.find((item) => item.type === type && item.advanced === advanced);
   if (!template) throw new Error(`No template for ${advanced ? 'an advanced ' : ''}${type}`);
   const plan = lib.planEntry({ type, title, tags, advanced, now: new Date(), root, images });
-  const taken = lib.conflicts(plan).find((path) => existsSync(path));
-  if (taken) throw new Error(`${taken} already exists; not overwriting it`);
-  for (const tag of newTags) lib.appendTag(tagsFile, tag);
-  lib.writeEntry(plan, template, images ?? []);
+  lib.createEntry(plan, template, { tagsFile, newTags, images });
 
   const dev = devCommand(plan.url.app);
   const url = `http://localhost:${dev.port}${plan.url.path}`;
@@ -228,9 +245,14 @@ async function main(argv: string[]): Promise<void> {
   if (values['no-open']) return;
 
   const editor = editorCommand(process.env, plan.file);
-  if (editor) {
+  if (editor?.terminal) {
+    console.log(`Open ${plan.file} in your editor; starting the dev server…`);
+  } else if (editor) {
     spawn(editor.command, editor.args, { detached: true, stdio: 'ignore' })
       .on('error', (error) => console.error(`Could not open ${editor.command}: ${error.message}`))
+      .on('exit', (code) => {
+        if (code) console.error(`${editor.command} exited with code ${code}; open ${plan.file} yourself.`);
+      })
       .unref();
   } else {
     console.log('Set $EDITOR (or $VISUAL) to open new entries automatically.');

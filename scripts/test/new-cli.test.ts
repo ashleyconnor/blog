@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { photosSchema, postSchema, tilSchema } from '@ac/content';
 import { parse } from 'yaml';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { devCommand, editorCommand } from '../new.ts';
+import { devCommand, editorCommand, isTerminalEditor } from '../new.ts';
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const FIXTURES = join(REPO, 'tests', 'fixtures', 'content');
@@ -181,13 +181,50 @@ describe('editorCommand', () => {
     expect(editorCommand({ EDITOR: 'code -n', VISUAL: 'vim' }, '/c/a.md')).toEqual({
       command: 'code',
       args: ['-n', '/c/a.md'],
+      terminal: false,
     });
-    expect(editorCommand({ VISUAL: 'subl' }, '/c/a.md')).toEqual({ command: 'subl', args: ['/c/a.md'] });
+    expect(editorCommand({ VISUAL: 'subl' }, '/c/a.md')).toEqual({
+      command: 'subl',
+      args: ['/c/a.md'],
+      terminal: false,
+    });
+  });
+
+  it('marks terminal editors, which are not spawned', () => {
+    expect(editorCommand({ EDITOR: 'vim' }, '/c/a.md')?.terminal).toBe(true);
+    expect(editorCommand({ EDITOR: 'emacs -nw' }, '/c/a.md')?.terminal).toBe(true);
+    expect(editorCommand({ EDITOR: '/usr/local/bin/nvim' }, '/c/a.md')?.terminal).toBe(true);
+    expect(editorCommand({ EDITOR: 'code -n' }, '/c/a.md')?.terminal).toBe(false);
   });
 
   it('is undefined when neither is set', () => {
     expect(editorCommand({ EDITOR: ' ' }, '/c/a.md')).toBeUndefined();
     expect(editorCommand({}, '/c/a.md')).toBeUndefined();
+  });
+});
+
+describe('isTerminalEditor', () => {
+  it.each(['vi', 'vim', 'nvim', 'nano', 'pico', 'micro', 'hx', 'helix', 'kak', 'joe', 'ne', 'ed'])(
+    'treats %s as a terminal editor',
+    (command) => {
+      expect(isTerminalEditor(command, [])).toBe(true);
+      expect(isTerminalEditor(`/opt/homebrew/bin/${command}`, ['+10'])).toBe(true);
+    },
+  );
+
+  it('treats emacs and emacsclient as terminal editors only with -nw, -t or --tty', () => {
+    for (const flag of ['-nw', '-t', '--tty']) {
+      expect(isTerminalEditor('emacs', [flag])).toBe(true);
+      expect(isTerminalEditor('/usr/bin/emacsclient', [flag])).toBe(true);
+    }
+    expect(isTerminalEditor('emacs', [])).toBe(false);
+    expect(isTerminalEditor('emacsclient', ['-c'])).toBe(false);
+  });
+
+  it('treats GUI editors as GUI editors', () => {
+    expect(isTerminalEditor('code', ['-n'])).toBe(false);
+    expect(isTerminalEditor('subl', [])).toBe(false);
+    expect(isTerminalEditor('/Applications/Zed.app/Contents/MacOS/zed', [])).toBe(false);
   });
 });
 
