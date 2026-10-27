@@ -2,7 +2,7 @@ _site
 .sass-cache
 .jekyll-metadata
 .env
-public
+/public/
 .tweet-cache/
 .superpowers/
 node_modules/

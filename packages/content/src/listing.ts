@@ -20,6 +20,8 @@ export interface StreamItem {
   extraCount?: number;
   draft: boolean;
   unlisted: boolean;
+  /** Old Jekyll paths that redirect here (see `buildRedirects`). */
+  legacyUrls?: string[];
 }
 
 export interface MonthGroup {

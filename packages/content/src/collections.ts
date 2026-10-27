@@ -2,19 +2,10 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
+import { collectionGlobs } from './globs';
 import { pageSchema, photosSchema, postSchema, tilSchema } from './schema';
 
-/**
- * Glob patterns, relative to each collection's directory. Posts are top-level `.md`/`.mdx` files or
- * a one-level folder with an `index.md(x)`; files deeper inside a post folder (components, data,
- * READMEs) are never entries.
- */
-export const collectionGlobs = {
-  posts: '{*.md,*.mdx,*/index.md,*/index.mdx}',
-  til: '*.md',
-  photos: '*/index.md',
-  pages: '*.md',
-} as const;
+export { collectionGlobs };
 
 const base = (contentRoot: string, dir: string) => pathToFileURL(resolve(contentRoot, dir));
 

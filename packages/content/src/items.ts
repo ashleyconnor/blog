@@ -15,6 +15,7 @@ interface FrontMatter {
   excerpt?: string;
   draft: boolean;
   unlisted: boolean;
+  legacyUrls?: string[];
 }
 
 /** The parts of an Astro collection entry the stream needs. */
@@ -34,6 +35,7 @@ function common({ id, data }: Entry) {
     excerpt: data.excerpt && stripMarkdown(data.excerpt),
     draft: data.draft,
     unlisted: data.unlisted,
+    legacyUrls: data.legacyUrls,
   };
 }
 

@@ -60,6 +60,26 @@ const rows = (html: string) =>
 
 const rowFor = (html: string, title: string) => rows(html).find((r) => r.body.includes(title));
 
+/** Title and link of each `<item>` of an RSS feed, in feed order. */
+const feedItems = (xml: string) =>
+  [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].map(([, item]) => ({
+    title: item!.match(/<title>([^<]*)<\/title>/)?.[1],
+    link: item!.match(/<link>([^<]*)<\/link>/)?.[1],
+  }));
+
+/** Text of every `sitemap-*.xml`, the index included. */
+const sitemapText = (outDir: string) =>
+  readdirSync(outDir)
+    .filter((name) => /^sitemap-.*\.xml$/.test(name))
+    .map((name) => file(outDir, name))
+    .join('\n');
+
+/** Page URLs the sitemaps list (the index only points at the other sitemap files). */
+const sitemapUrls = (outDir: string) =>
+  readdirSync(outDir)
+    .filter((name) => /^sitemap-\d+\.xml$/.test(name))
+    .flatMap((name) => [...file(outDir, name).matchAll(/<loc>([^<]*)<\/loc>/g)].map(([, loc]) => loc!));
+
 const tagPages = (outDir: string) =>
   readdirSync(join(outDir, 'tags'), { withFileTypes: true })
     .filter((d) => d.isDirectory())
@@ -78,6 +98,8 @@ const TILS = [
   'Reading a file in Elixir',
 ];
 const HIDDEN_TILS = ['An unlisted TIL', 'A draft TIL'];
+const ORIGIN = 'https://www.ashleyconnor.co.uk';
+const TIL_ORIGIN = 'https://til.ashleyconnor.co.uk';
 
 beforeAll(async () => {
   dist = mkdtempSync(join(tmpdir(), 'ac-blog-dist-'));
@@ -309,5 +331,124 @@ describe('other pages', () => {
     expect(html).toMatch(/<h1[^>]*>\s*InstaBoxd Privacy Policy\s*<\/h1>/);
     expect(html).toContain('<link rel="canonical" href="https://www.ashleyconnor.co.uk/instaboxd/privacy/">');
     expect(html).toMatch(/<h2[^>]*>\s*Contact\s*<\/h2>/);
+  });
+});
+
+describe('feeds', () => {
+  it('feed keeps /feed.xml path', () => {
+    const xml = file(dist, 'feed.xml');
+    expect(xml).toMatch(/^<\?xml version="1.0" encoding="UTF-8"\?><rss version="2.0">/);
+    expect(xml).toContain(`<channel><title>Ashley Connor</title>`);
+    expect(xml).toContain(`<link>${ORIGIN}/</link>`);
+  });
+
+  it('feed excludes unlisted', () => {
+    const xml = file(dist, 'feed.xml');
+    expect(xml).not.toContain(UNLISTED.path);
+    for (const title of [UNLISTED.title, DRAFT.title, ...HIDDEN_TILS]) expect(xml).not.toContain(title);
+  });
+
+  it('lists every public entry newest first; TIL items link to the subdomain', () => {
+    const items = feedItems(file(dist, 'feed.xml'));
+    expect(items.map((i) => i.title)).toEqual([
+      BASIC.title,
+      'Reading a file in Elixir',
+      'Zsh glob qualifiers',
+      'How to auto-activate a venv with direnv',
+      'A late evening TIL',
+      PHOTOS,
+      ADVANCED.title,
+      'Elixir pattern matching in anonymous functions',
+    ]);
+    const link = (title: string) => items.find((i) => i.title === title)?.link;
+    expect(link(BASIC.title)).toBe(`${ORIGIN}/${BASIC.path}/`);
+    expect(link(PHOTOS)).toBe(`${ORIGIN}/photos/anza-borrego/`);
+    expect(link('Zsh glob qualifiers')).toBe(`${TIL_ORIGIN}/2025-04-03-til-zsh-glob-qualifiers/`);
+  });
+
+  it('describes items with their plain-text excerpt', () => {
+    expect(file(dist, 'feed.xml')).toContain('<description>An MDX post with a figure and a callout.</description>');
+  });
+
+  it('has a feed per local type: /posts/feed.xml and /photos/feed.xml', () => {
+    const posts = file(dist, 'posts/feed.xml');
+    expect(feedItems(posts).map((i) => i.title)).toEqual([BASIC.title, ADVANCED.title]);
+    expect(posts).toContain(`<link>${ORIGIN}/posts/</link>`);
+    const photos = file(dist, 'photos/feed.xml');
+    expect(feedItems(photos).map((i) => i.title)).toEqual([PHOTOS]);
+    expect(photos).toContain(`<link>${ORIGIN}/photos/</link>`);
+  });
+});
+
+describe('sitemap', () => {
+  it('sitemap excludes unlisted', () => {
+    expect(sitemapText(dist)).not.toContain(UNLISTED.path);
+    expect(existsSync(join(dist, UNLISTED.path, 'index.html'))).toBe(true);
+    const urls = sitemapUrls(dist);
+    for (const path of ['', `${BASIC.path}/`, `${ADVANCED.path}/`, 'posts/', 'tags/python/', 'instaboxd/privacy/']) {
+      expect(urls, path).toContain(`${ORIGIN}/${path}`);
+    }
+  });
+
+  it('lists only built pages that may be indexed: no drafts, empty tag pages or 404', () => {
+    for (const outDir of [dist, draftDist]) {
+      const urls = sitemapUrls(outDir);
+      expect(urls.length).toBeGreaterThan(0);
+      for (const url of urls) {
+        expect(url.startsWith(`${ORIGIN}/`), url).toBe(true);
+        const path = new URL(url).pathname;
+        expect(existsSync(join(outDir, path, 'index.html')), url).toBe(true);
+        expect(page(outDir, path), url).not.toContain('noindex');
+      }
+    }
+    expect(sitemapText(dist)).not.toContain('/tags/rails/');
+    expect(sitemapText(draftDist)).not.toContain(DRAFT.path);
+    expect(sitemapText(dist)).not.toContain(`${ORIGIN}/404`);
+  });
+
+  it('robots.txt allows crawling and points at the sitemap index', () => {
+    const robots = file(dist, 'robots.txt');
+    expect(robots).toMatch(/^User-agent: \*$/m);
+    expect(robots).toMatch(/^Allow: \/$/m);
+    expect(robots).toContain(`Sitemap: ${ORIGIN}/sitemap-index.xml`);
+    expect(existsSync(join(dist, 'sitemap-index.xml'))).toBe(true);
+  });
+});
+
+describe('_redirects', () => {
+  const lines = (outDir: string) => file(outDir, '_redirects').split('\n');
+
+  it('301s each legacy URL to its new page, unlisted posts included', () => {
+    expect(lines(dist)).toEqual(
+      expect.arrayContaining([
+        '/2025/04/24/basic-post.html /2025/04/23/basic-post/ 301',
+        '/2014/09/07/unlisted-post.html /2014/09/07/unlisted-post/ 301',
+        '/blog/2014/09/07/unlisted-post/ /2014/09/07/unlisted-post/ 301',
+        '/page2/ /page/2/ 301',
+        '/assets/pdfs/resume.pdf /resume.pdf 301',
+      ]),
+    );
+  });
+
+  it('sends TIL legacy URLs to the subdomain, explicit rules before the /til/* wildcard', () => {
+    const out = lines(dist);
+    const wildcard = out.indexOf(`/til/* ${TIL_ORIGIN}/:splat 301`);
+    for (const rule of [
+      `/til/2022-12-01-elixir-pattern-matching-in-anon-functions ${TIL_ORIGIN}/2022-12-01-elixir-pattern-matching-in-anon-functions/ 301`,
+      `/til/index ${TIL_ORIGIN}/ 301`,
+    ]) {
+      expect(out.indexOf(rule), rule).toBeGreaterThanOrEqual(0);
+      expect(out.indexOf(rule), rule).toBeLessThan(wildcard);
+    }
+  });
+
+  it('only redirects to drafts in builds that show them', () => {
+    expect(file(dist, '_redirects')).not.toContain('draft-post');
+    expect(lines(draftDist)).toContain('/2025/04/22/draft-post.html /2025/04/22/draft-post/ 301');
+  });
+
+  it('is a plain file at the site root, not a page', () => {
+    expect(existsSync(join(dist, '_redirects', 'index.html'))).toBe(false);
+    expect(sitemapText(dist)).not.toContain('_redirects');
   });
 });
