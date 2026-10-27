@@ -49,13 +49,14 @@ export interface PlanOptions {
 const MAX_SLUG = 80;
 const TYPES: readonly EntryType[] = ['post', 'til', 'photos'];
 
-/** A URL slug for a title (GitHub's heading rules), at most 80 characters. */
+/** A URL slug for a title (GitHub's heading rules), at most 80 characters, cut at a hyphen. */
 export function slugify(title: string): string {
-  const result = slug(title)
-    .replace(/-{2,}/g, '-')
-    .replace(/^-+/, '')
-    .slice(0, MAX_SLUG)
-    .replace(/-+$/, '');
+  let result = slug(title).replace(/-{2,}/g, '-').replace(/^-+|-+$/g, '');
+  if (result.length > MAX_SLUG) {
+    // Cut back to the last hyphen at or before the limit so no word is split.
+    const cut = result.lastIndexOf('-', MAX_SLUG);
+    result = result.slice(0, cut > 0 ? cut : MAX_SLUG).replace(/-+$/, '');
+  }
   if (!result) throw new Error(`Title "${title}" has no characters usable in a URL`);
   return result;
 }
@@ -118,8 +119,11 @@ export function planEntry(opts: PlanOptions): EntryPlan {
   if (type === 'photos') {
     const images = opts.images ?? [];
     if (images.length === 0) throw new Error('Photos need at least one image');
+    const seen = new Set<string>();
     data.images = images.map((path) => {
       const file = basename(path);
+      if (seen.has(file)) throw new Error(`Two images are named ${file}; rename one`);
+      seen.add(file);
       return { src: `./${file}`, alt: `TODO: describe ${file}` };
     });
     const folder = join(root, 'photos', name);

@@ -50,6 +50,20 @@ describe('slugify', () => {
     expect(slug.endsWith('-')).toBe(false);
     expect(slug.startsWith('word-word')).toBe(true);
   });
+
+  it('cuts a long slug back to the last hyphen rather than splitting a word', () => {
+    // Position 80 falls inside "memoization".
+    const title = `${'cache '.repeat(12)}memoization strategies`;
+    const full = title.trim().replace(/ /g, '-');
+    expect(full.slice(0, 80).endsWith('-')).toBe(false);
+    const slug = slugify(title);
+    expect(slug).toBe('cache-'.repeat(12).slice(0, -1));
+    expect(full.startsWith(`${slug}-`)).toBe(true);
+  });
+
+  it('hard-cuts a long slug with no hyphen', () => {
+    expect(slugify('a'.repeat(100))).toBe('a'.repeat(80));
+  });
 });
 
 describe('entryDate', () => {
@@ -123,6 +137,17 @@ describe('planEntry', () => {
       { src: './IMG_1.jpg', alt: 'TODO: describe IMG_1.jpg' },
       { src: './beach.png', alt: 'TODO: describe beach.png' },
     ]);
+  });
+
+  it('refuses two images with the same file name', () => {
+    expect(() =>
+      planEntry({
+        ...base,
+        type: 'photos',
+        advanced: false,
+        images: ['/a/IMG_1.jpg', '/b/IMG_1.jpg'],
+      }),
+    ).toThrow(/IMG_1\.jpg/);
   });
 
   it('refuses photos without images', () => {
