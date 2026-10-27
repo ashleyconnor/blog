@@ -30,5 +30,7 @@ gem "minimal-mistakes-jekyll", "~> 4.27.0"
 
 gem "kramdown-parser-gfm"
 
-# cloudflare pages junk
-gem "ffi", "< 1.17.0"
+
+# no longer default gems from Ruby 3.4
+gem "base64"
+gem "bigdecimal"
