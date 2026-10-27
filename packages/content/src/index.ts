@@ -4,3 +4,4 @@ export * from './listing';
 export * from './schema';
 export * from './tags';
 export * from './post';
+export * from './resume';

@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "astro build && node --experimental-strip-types ../../scripts/resume-pdf.ts",
+    "build:site": "astro build",
     "preview": "astro preview",
     "check": "astro check"
   },

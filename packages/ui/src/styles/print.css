@@ -1,0 +1,30 @@
+/*
+ * Print: A4, light background, black text, no site chrome. The site is dark only on screen, so
+ * instead of restyling elements this swaps the colour tokens, and everything coloured from a
+ * token follows. The resume PDF (scripts/resume-pdf.ts) is printed with these styles.
+ * Unlayered, so it wins over the token defaults in Tailwind's `theme` layer.
+ */
+@media print {
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+
+  :root {
+    color-scheme: light;
+    --color-bg: #fff;
+    --color-surface: #fff;
+    --color-line: #c8c8c8;
+    --color-head: #000;
+    --color-text: #000;
+    --color-muted: #000;
+    --color-post: #000;
+    --color-til: #000;
+    --color-photo: #000;
+  }
+
+  nav[aria-label='Main'],
+  footer {
+    display: none;
+  }
+}
