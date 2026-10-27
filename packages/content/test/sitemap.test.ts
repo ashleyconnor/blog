@@ -52,6 +52,7 @@ describe('loadItems', () => {
       '/2025/04/22/draft-post/',
       '/2025/04/23/basic-post/',
       '/photos/anza-borrego/',
+      '/photos/draft-gallery/',
       `${TIL}/2022-12-01-elixir-pattern-matching-in-anon-functions/`,
       `${TIL}/2025-02-05-til-unlisted-entry/`,
       `${TIL}/2025-02-28-til-late-evening-entry/`,
@@ -64,6 +65,7 @@ describe('loadItems', () => {
     expect(byHref('/2014/09/07/unlisted-post/')).toMatchObject({ type: 'post', unlisted: true, draft: false });
     expect(byHref('/2025/04/22/draft-post/')).toMatchObject({ draft: true, unlisted: false, tags: ['tools'] });
     expect(byHref('/photos/anza-borrego/')).toMatchObject({ type: 'photos', tags: ['travel'] });
+    expect(byHref('/photos/draft-gallery/')).toMatchObject({ type: 'photos', draft: true });
   });
 });
 

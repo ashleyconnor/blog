@@ -413,11 +413,11 @@ describe('sitemap', () => {
     vi.stubEnv('CONTENT_ROOT', fixtures);
     const items = loadItems();
     vi.unstubAllEnvs();
-    // TIL hrefs are absolute on the subdomain (checked in til.test.ts). Photo galleries
-    // (/photos/<id>/) are not built on this branch yet: they come with the photo gallery task.
-    const local = items.filter((item) => item.href.startsWith('/') && item.type !== 'photos');
+    // TIL hrefs are absolute on the subdomain (checked in til.test.ts).
+    const local = items.filter((item) => item.href.startsWith('/'));
     expect(local.map((item) => item.href)).toContain(`/${UNLISTED.path}/`);
     expect(local.map((item) => item.href)).toContain(`/${DRAFT.path}/`);
+    expect(local.map((item) => item.href)).toContain('/photos/draft-gallery/');
     for (const { href, draft } of local) {
       if (!draft) expect(existsSync(join(dist, href, 'index.html')), href).toBe(true);
       expect(existsSync(join(draftDist, href, 'index.html')), href).toBe(true);
