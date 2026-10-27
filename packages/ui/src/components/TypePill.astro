@@ -1,0 +1,20 @@
+---
+import type { EntryType } from '@ac/content';
+import { entryTypes } from '../entry-types';
+
+interface Props {
+  type: EntryType;
+  class?: string;
+}
+
+const { type, class: className } = Astro.props;
+const { label, text } = entryTypes[type];
+---
+
+<span
+  class:list={[
+    'inline-block rounded-full border border-line bg-surface px-2.5 py-0.5 font-mono text-[11px] leading-5',
+    text,
+    className,
+  ]}>{label}</span
+>

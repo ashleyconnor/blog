@@ -5,10 +5,17 @@
   "type": "module",
   "exports": {
     "./styles/global.css": "./src/styles/global.css",
-    "./fonts": "./src/fonts.ts"
+    "./fonts": "./src/fonts.ts",
+    "./expressive-code": "./src/expressive-code.ts",
+    "./components/*": "./src/components/*"
   },
   "dependencies": {
+    "@tailwindcss/typography": "0.5.20",
     "astro": "7.4.2",
+    "astro-expressive-code": "0.44.3",
     "tailwindcss": "4.3.3"
+  },
+  "devDependencies": {
+    "@ac/content": "workspace:*"
   }
 }

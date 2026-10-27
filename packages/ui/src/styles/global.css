@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@plugin '@tailwindcss/typography';
 @source "../";
 
 @theme {
@@ -46,4 +47,25 @@
     color: var(--color-text);
     font-family: var(--font-mono);
   }
+  nav {
+    color: var(--color-muted);
+  }
+}
+
+@layer components {
+  /*
+   * Lets an element spread past the 680px reading column, up to 1100px or the viewport minus a
+   * 1rem gutter. Below `md` the column is already full-width, so it does nothing.
+   */
+  @media (min-width: 48rem) {
+    .breakout {
+      width: min(1100px, calc(100vw - 2rem));
+      margin-inline: calc(50% - min(550px, calc(50vw - 1rem)));
+    }
+  }
+}
+
+/* Expressive Code hides the copy button until the frame is hovered; keep it visible for touch. */
+.expressive-code .frame .copy button {
+  opacity: 0.7;
 }

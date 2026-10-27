@@ -1,0 +1,30 @@
+---
+const links = [
+  { label: 'Posts', href: '/posts/' },
+  { label: 'TIL ↗', href: 'https://til.ashleyconnor.co.uk/' },
+  { label: 'Photos', href: '/photos/' },
+  { label: 'Resume', href: '/resume/' },
+];
+
+const { pathname } = Astro.url;
+const isCurrent = (href: string) => href.startsWith('/') && pathname.startsWith(href);
+---
+
+<nav aria-label="Main" class="flex flex-wrap items-center justify-between gap-x-4 border-b border-line py-2 text-[13px]">
+  <a href="/" class="py-2 font-heading text-[17px] font-bold text-head">Ashley Connor</a>
+  <ul class="flex flex-wrap items-center gap-x-3 sm:gap-x-4">
+    {
+      links.map(({ label, href }) => (
+        <li>
+          <a
+            href={href}
+            aria-current={isCurrent(href) ? 'page' : undefined}
+            class="inline-block py-2 text-muted hover:text-head aria-[current=page]:text-head"
+          >
+            {label}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>
