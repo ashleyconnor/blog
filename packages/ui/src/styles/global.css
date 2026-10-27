@@ -10,11 +10,9 @@
   --color-post: #8ab4ff;
   --color-til: #7fd1c7;
   --color-photo: #f0b86e;
-
-  --font-heading: var(--font-heading), system-ui, sans-serif;
-  --font-body: var(--font-body), system-ui, sans-serif;
-  --font-mono: var(--font-mono), ui-monospace, monospace;
 }
+
+/* --font-heading/body/mono are defined on :root by the Astro Fonts API (with fallbacks); do not redeclare them in @theme (self-referencing cycle). */
 
 @layer base {
   html {
