@@ -26,10 +26,11 @@ async function build(outDir: string, { contentRoot = fixtures, showDrafts = fals
 /**
  * The fixtures plus enough TILs to need a second homepage page (15 per page). The MDX post is left
  * out: its `@ac/ui` imports only resolve from inside the repository, and this copy lives in tmpdir.
+ * Its image stays, because a TIL fixture embeds it.
  */
 function pagedFixtures(): string {
   const dir = mkdtempSync(join(tmpdir(), 'ac-blog-paged-content-'));
-  cpSync(fixtures, dir, { recursive: true, filter: (src) => !src.includes("advanced-post") });
+  cpSync(fixtures, dir, { recursive: true, filter: (src) => !src.endsWith(join('advanced-post', 'index.mdx')) });
   for (let day = 1; day <= 15; day++) {
     const dd = String(day).padStart(2, '0');
     writeFileSync(
@@ -69,7 +70,14 @@ const ADVANCED = { title: 'An advanced post', path: '2025/02/10/advanced-post' }
 const UNLISTED = { title: 'An unlisted post', path: '2014/09/07/unlisted-post' };
 const DRAFT = { title: 'A draft post', path: '2025/04/22/draft-post' };
 const PHOTOS = 'A weekend in Anza-Borrego';
-const TILS = ['How to auto-activate a venv with direnv', 'Elixir pattern matching in anonymous functions'];
+const TILS = [
+  'How to auto-activate a venv with direnv',
+  'Elixir pattern matching in anonymous functions',
+  'A late evening TIL',
+  'Zsh glob qualifiers',
+  'Reading a file in Elixir',
+];
+const HIDDEN_TILS = ['An unlisted TIL', 'A draft TIL'];
 
 beforeAll(async () => {
   dist = mkdtempSync(join(tmpdir(), 'ac-blog-dist-'));
@@ -92,7 +100,9 @@ describe('homepage stream', () => {
   });
 
   it('lists every public entry of every type, newest first', () => {
-    expect(rows(page(dist, '')).map((r) => r.type)).toEqual(['post', 'til', 'photos', 'post', 'til']);
+    expect(rows(page(dist, '')).map((r) => r.type)).toEqual([
+      'post', 'til', 'til', 'til', 'til', 'photos', 'post', 'til',
+    ]);
     const html = page(dist, '');
     for (const title of [BASIC.title, ADVANCED.title, PHOTOS, ...TILS]) expect(html).toContain(title);
   });
@@ -102,6 +112,7 @@ describe('homepage stream', () => {
       const html = page(dist, path);
       expect(html, path).not.toContain(UNLISTED.title);
       expect(html, path).not.toContain(DRAFT.title);
+      for (const title of HIDDEN_TILS) expect(html, path).not.toContain(title);
     }
   });
 
@@ -133,7 +144,7 @@ describe('homepage stream', () => {
 describe('stream rows', () => {
   it('TIL rows link to subdomain', () => {
     const tils = rows(page(dist, '')).filter((r) => r.type === 'til');
-    expect(tils).toHaveLength(2);
+    expect(tils).toHaveLength(5);
     for (const { body } of tils) {
       const hrefs = [...body.matchAll(/href="([^"]*)"/g)].map(([, href]) => href);
       expect(hrefs.length).toBeGreaterThan(0);
@@ -219,6 +230,7 @@ describe('drafts', () => {
 
   it('still never lists unlisted posts', () => {
     expect(page(draftDist, '')).not.toContain(UNLISTED.title);
+    expect(page(draftDist, '')).not.toContain('An unlisted TIL');
   });
 });
 
@@ -227,7 +239,8 @@ describe('pagination', () => {
     const first = page(pagedDist, '');
     const second = page(pagedDist, 'page/2');
     expect(rows(first)).toHaveLength(15);
-    expect(rows(second)).toHaveLength(19 - 15);
+    // Public: the basic post, the gallery, 5 TIL fixtures and 15 extra TILs.
+    expect(rows(second)).toHaveLength(22 - 15);
     expect(existsSync(join(pagedDist, '2/index.html'))).toBe(false);
     expect(first).toMatch(/<a[^>]*href="\/page\/2\/"[^>]*rel="next"|<a[^>]*rel="next"[^>]*href="\/page\/2\/"/);
     expect(second).toMatch(/<a[^>]*href="\/"[^>]*rel="prev"|<a[^>]*rel="prev"[^>]*href="\/"/);
