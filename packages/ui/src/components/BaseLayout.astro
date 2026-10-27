@@ -15,7 +15,11 @@ interface Props {
   draft?: boolean;
 }
 
-const { title, description, canonical, ogImage, noindex = false, draft = false } = Astro.props;
+const SITE_DESCRIPTION = 'The idle thoughts of a rambling developer.';
+
+const { title, canonical, ogImage, noindex = false, draft = false } = Astro.props;
+// `||`, not a default value, so an empty excerpt also falls back.
+const description = Astro.props.description || SITE_DESCRIPTION;
 
 const image = ogImage ? new URL(ogImage, canonical) : undefined;
 ---
@@ -28,18 +32,18 @@ const image = ogImage ? new URL(ogImage, canonical) : undefined;
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#0f1629" />
     <title>{title}</title>
-    {description && <meta name="description" content={description} />}
+    <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     {(noindex || draft) && <meta name="robots" content="noindex" />}
 
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
-    {description && <meta property="og:description" content={description} />}
+    <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     {image && <meta property="og:image" content={image} />}
     <meta name="twitter:card" content={image ? 'summary_large_image' : 'summary'} />
     <meta name="twitter:title" content={title} />
-    {description && <meta name="twitter:description" content={description} />}
+    <meta name="twitter:description" content={description} />
     {image && <meta name="twitter:image" content={image} />}
 
     <Font cssVariable="--font-space-grotesk" preload />
@@ -51,7 +55,7 @@ const image = ogImage ? new URL(ogImage, canonical) : undefined;
     {
       draft && (
         <div data-draft-banner role="status" class="border-b border-line bg-surface py-2 text-center text-sm text-photo">
-          <strong class="font-mono font-semibold uppercase tracking-wider">Draft</strong>
+          <strong class="font-mono font-medium uppercase tracking-wider">Draft</strong>
           <span class="text-muted"> · only shown in preview builds</span>
         </div>
       )

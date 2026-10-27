@@ -12,6 +12,9 @@
   --color-post: #8ab4ff;
   --color-til: #7fd1c7;
   --color-photo: #f0b86e;
+
+  /* Wide enough for the sidebar table of contents to sit clear of a 1100px `.breakout`; see Toc.astro. */
+  --breakpoint-3xl: 104rem;
 }
 
 @theme inline {
@@ -55,7 +58,8 @@
 @layer components {
   /*
    * Lets an element spread past the 680px reading column, up to 1100px or the viewport minus a
-   * 1rem gutter. Below `md` the column is already full-width, so it does nothing.
+   * 1rem gutter. Below `md` the column is already full-width, so it does nothing. The sidebar
+   * table of contents (Toc.astro) is positioned from this 1100px, so change them together.
    */
   @media (min-width: 48rem) {
     .breakout {

@@ -14,7 +14,8 @@ const styles = {
 const { label, border, text } = styles[type];
 ---
 
-<aside
+<div
+  role="note"
   data-callout={type}
   aria-label={label}
   class:list={['my-6 rounded-r-lg border-l-4 bg-surface px-4 py-3 text-text', border]}
@@ -23,4 +24,4 @@ const { label, border, text } = styles[type];
   <div class="[&>:first-child]:mt-0 [&>:last-child]:mb-0 [&_code]:text-head">
     <slot />
   </div>
-</aside>
+</div>
