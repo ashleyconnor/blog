@@ -1,0 +1,58 @@
+---
+import type { ImageMetadata } from 'astro';
+import { getImage, Picture } from 'astro:assets';
+
+interface Props {
+  images: { src: ImageMetadata; alt: string; caption?: string }[];
+}
+
+// Every published file is a re-encode by Astro's image service, which drops EXIF (including GPS).
+// Never link or reference `src.src`: that would publish the original file, metadata and all.
+
+/** The lightbox's full-size images are capped at this width. */
+const FULL_WIDTH = 2400;
+/** Thumbnails in the first row load eagerly (the grid is 3 columns wide on desktop). */
+const EAGER = 3;
+
+const images = await Promise.all(
+  Astro.props.images.map(async (image) => ({
+    ...image,
+    full: await getImage({ src: image.src, format: 'webp', width: Math.min(image.src.width, FULL_WIDTH) }),
+  })),
+);
+---
+
+<ul role="list" data-gallery class="breakout mt-8 grid grid-cols-2 gap-2 md:grid-cols-3">
+  {
+    images.map(({ src, alt, caption, full }, i) => (
+      <li>
+        <figure>
+          {/* Thumbnails are centre-cropped to 4:3; `data-pswp-cropped` makes PhotoSwipe zoom from that crop. */}
+          <a
+            href={full.src}
+            data-pswp-width={full.attributes.width}
+            data-pswp-height={full.attributes.height}
+            data-pswp-cropped="true"
+            class="block rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-photo"
+          >
+            <Picture
+              src={src}
+              alt={alt}
+              formats={['avif', 'webp']}
+              width={720}
+              height={540}
+              widths={[360, 540, 720]}
+              sizes="(min-width: 1132px) 361px, (min-width: 768px) calc((100vw - 3rem) / 3), calc((100vw - 2.5rem) / 2)"
+              fit="cover"
+              loading={i < EAGER ? 'eager' : 'lazy'}
+              class="aspect-[4/3] h-auto w-full rounded-md border border-line object-cover transition-colors hover:border-muted"
+            />
+          </a>
+          {caption && <figcaption class="mt-1.5 text-sm text-muted">{caption}</figcaption>}
+        </figure>
+      </li>
+    ))
+  }
+</ul>
+
+<script src="../scripts/lightbox.ts"></script>
