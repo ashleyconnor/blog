@@ -5,14 +5,27 @@ import type PhotoSwipeLightbox from 'photoswipe/lightbox';
 
 const THUMB = 'a[data-pswp-width]';
 
+// PhotoSwipe's own colours (black, greys, white) swapped for the site's palette tokens.
+const PALETTE = `.pswp {
+  --pswp-bg: var(--color-bg);
+  --pswp-placeholder-bg: var(--color-surface);
+  --pswp-preloader-color: var(--color-line);
+  --pswp-preloader-color-secondary: var(--color-head);
+  --pswp-icon-color: var(--color-head);
+  --pswp-icon-color-secondary: var(--color-line);
+  --pswp-icon-stroke-color: var(--color-line);
+}`;
+
 async function createLightbox(gallery: HTMLElement): Promise<PhotoSwipeLightbox> {
-  // The stylesheet comes as a string: a plain CSS import would be added to the page's <head>.
-  const [{ default: Lightbox }, { default: css }] = await Promise.all([
+  // Everything loads here, PhotoSwipe's core included, so any failed chunk reaches the caller's
+  // fallback. The stylesheet comes as a string: a plain CSS import would be added to the page's <head>.
+  const [{ default: Lightbox }, { default: PhotoSwipe }, { default: css }] = await Promise.all([
     import('photoswipe/lightbox'),
+    import('photoswipe'),
     import('photoswipe/style.css?inline'),
   ]);
-  document.head.append(Object.assign(document.createElement('style'), { textContent: css }));
-  return new Lightbox({ gallery, children: THUMB, pswpModule: () => import('photoswipe') });
+  document.head.append(Object.assign(document.createElement('style'), { textContent: css + PALETTE }));
+  return new Lightbox({ gallery, children: THUMB, pswpModule: PhotoSwipe });
 }
 
 for (const gallery of document.querySelectorAll<HTMLElement>('[data-gallery]')) {
