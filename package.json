@@ -1,0 +1,18 @@
+{
+  "name": "ashleyconnor-sites",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.15.0",
+  "engines": { "node": ">=22.23.4" },
+  "scripts": {
+    "build": "pnpm -r --filter './apps/*' build",
+    "test": "vitest run",
+    "check": "pnpm -r --filter './apps/*' check",
+    "dev:blog": "pnpm --filter blog dev",
+    "dev:til": "pnpm --filter til dev"
+  },
+  "devDependencies": {
+    "execa": "^9.6.0",
+    "vitest": "5.0.5"
+  }
+}

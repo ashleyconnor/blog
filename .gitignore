@@ -5,3 +5,6 @@ _site
 public
 .tweet-cache/
 .superpowers/
+node_modules/
+dist/
+.astro/
