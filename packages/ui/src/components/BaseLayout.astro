@@ -22,6 +22,10 @@ const { title, canonical, ogImage, noindex = false, draft = false } = Astro.prop
 const description = Astro.props.description || SITE_DESCRIPTION;
 
 const image = ogImage ? new URL(ogImage, canonical) : undefined;
+
+// Each site's own feed, so feed readers find it from any page (the TIL site has its own).
+const feed = new URL('/feed.xml', Astro.site);
+const feedTitle = feed.hostname.startsWith('til.') ? "Ashley Connor's TIL" : 'Ashley Connor';
 ---
 
 <!doctype html>
@@ -35,6 +39,7 @@ const image = ogImage ? new URL(ogImage, canonical) : undefined;
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    <link rel="alternate" type="application/rss+xml" title={feedTitle} href={feed} />
     {(noindex || draft) && <meta name="robots" content="noindex" />}
 
     <meta property="og:type" content="website" />

@@ -14,5 +14,12 @@ interface Feed {
 
 /** An RSS response for `items`. Their site-relative links resolve against the site root. */
 export function feed({ title, path, site, items }: Feed) {
-  return rss({ title, description: DESCRIPTION, site: new URL(path, site), items: items.map(feedItem) });
+  const origin = new URL(site!).origin;
+  return rss({
+    title,
+    description: DESCRIPTION,
+    site: new URL(path, site),
+    items: items.map((item) => feedItem(item, origin)),
+    xmlns: { content: 'http://purl.org/rss/1.0/modules/content/' },
+  });
 }

@@ -346,7 +346,7 @@ describe('other pages', () => {
 describe('feeds', () => {
   it('feed keeps /feed.xml path', () => {
     const xml = file(dist, 'feed.xml');
-    expect(xml).toMatch(/^<\?xml version="1.0" encoding="UTF-8"\?><rss version="2.0">/);
+    expect(xml).toMatch(/^<\?xml version="1.0" encoding="UTF-8"\?><rss version="2.0"[^>]*>/);
     expect(xml).toContain(`<channel><title>Ashley Connor</title>`);
     expect(xml).toContain(`<link>${ORIGIN}/</link>`);
   });
@@ -377,6 +377,24 @@ describe('feeds', () => {
 
   it('describes items with their plain-text excerpt', () => {
     expect(file(dist, 'feed.xml')).toContain('<description>An MDX post with a figure and a callout.</description>');
+  });
+
+  it('carries each Markdown post in full, with absolute links', () => {
+    const xml = file(dist, 'feed.xml');
+    expect(xml).toMatch(/<rss version="2\.0"[^>]*xmlns:content="http:\/\/purl\.org\/rss\/1\.0\/modules\/content\/"/);
+    const basic = xml.slice(xml.indexOf(`<title>${BASIC.title}</title>`));
+    const content = basic.match(/<content:encoded>([\s\S]*?)<\/content:encoded>/)?.[1] ?? '';
+    expect(content).toContain('Most of the time');
+    expect(content).toContain('https://example.com/');
+    expect(content).not.toMatch(/(?:src|href)=(?:"|&quot;)\/(?!\/)/);
+  });
+
+  it('pages advertise the feed for feed readers', () => {
+    for (const path of ['', BASIC.path, 'posts']) {
+      expect(page(dist, path)).toContain(
+        `<link rel="alternate" type="application/rss+xml" title="Ashley Connor" href="${ORIGIN}/feed.xml">`,
+      );
+    }
   });
 
   it('has a feed per local type: /posts/feed.xml and /photos/feed.xml', () => {
