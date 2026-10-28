@@ -1,4 +1,6 @@
+import { join } from 'node:path';
 import { defineConfig } from 'astro/config';
+import { contentRoot } from '@ac/content';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
@@ -9,8 +11,14 @@ import expressiveCode from 'astro-expressive-code';
 
 const site = 'https://www.ashleyconnor.co.uk';
 
+// A build against other content (CONTENT_ROOT: tests, temporary copies) keeps its content cache
+// inside that content folder, so no other build reuses its entries (stale entries point at files
+// in a deleted copy) and a temporary copy takes its cache with it.
+const cacheDir = process.env.CONTENT_ROOT ? join(contentRoot(), '.astro-cache') : undefined;
+
 export default defineConfig({
   output: 'static',
+  ...(cacheDir && { cacheDir }),
   site,
   trailingSlash: 'always',
   // The site stylesheet is a few kB: inlined, it costs no render-blocking request before first paint.

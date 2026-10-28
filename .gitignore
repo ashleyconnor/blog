@@ -11,3 +11,4 @@ dist/
 .lighthouseci/
 # Temporary content copies made by tests
 .tmp/
+.astro-cache/

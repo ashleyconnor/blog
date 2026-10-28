@@ -1,5 +1,6 @@
 import { execa } from 'execa';
-import { readdirSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -46,6 +47,28 @@ describe('scaffold', () => {
     expect(til).toContain('Automatically Activating a Virtual Environment with direnv');
     for (const fixture of ['A basic post', 'A draft post', 'Reading a file in Elixir', 'A draft TIL']) {
       expect(html + til, fixture).not.toContain(fixture);
+    }
+  }, 120_000);
+
+  // A build of other content (tests, `pnpm new` checks) must not leave its entries in the cache a
+  // later real build reuses: stale entries make the glob loader report duplicates, or point at
+  // images in a deleted copy and fail the build.
+  it('a real build ignores the content cache of a build against another CONTENT_ROOT', async () => {
+    const out = mkdtempSync(join(tmpdir(), 'ac-cache-'));
+    try {
+      await execa('pnpm', ['--filter', 'blog', 'exec', 'astro', 'build', '--outDir', join(out, 'fixtures')], {
+        cwd: root,
+        env: { CONTENT_ROOT: join(root, 'tests/fixtures/content'), PUBLIC_SHOW_DRAFTS: 'false' },
+      });
+      const real = await execa('pnpm', ['--filter', 'blog', 'exec', 'astro', 'build', '--outDir', join(out, 'real')], {
+        cwd: root,
+        env,
+        all: true,
+      });
+      expect(real.all).not.toMatch(/multiple entries with the same slug/);
+      expect(readFileSync(join(out, 'real', 'index.html'), 'utf8')).toContain('Pay transparency');
+    } finally {
+      rmSync(out, { recursive: true, force: true });
     }
   }, 120_000);
 });
