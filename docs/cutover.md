@@ -117,3 +117,25 @@ custom domains (Workers & Pages → the Worker → Settings → Domains & Routes
 domain on the Pages project. Pages recreates its `www` CNAME. This works only until step 9 deletes
 the Pages project, so don't do step 9 until step 8 passes. After a rollback, revert the cutover PR
 so the next `main` deploy doesn't attach the domains again.
+
+## What happened on 2026-10-27/28
+
+The cutover is done. What differed from the checklist:
+
+- **The apex was on Pages too.** The Pages project served both `ashleyconnor.co.uk` and `www`, and
+  the zone had no redirect rule. Before touching Pages, a zone redirect rule ("Apex to www") was
+  added: `https://ashleyconnor.co.uk/*` to `https://www.ashleyconnor.co.uk/${1}`, 301, keeping the
+  query string.
+- **Removing a domain from Pages also deletes its DNS record.** Removing `www` from the Pages project
+  deleted the `www` CNAME, so there was no separate DNS step. The first `main` deploy had failed as
+  expected with code 100117 ("already has externally managed DNS records"); re-running only the
+  `deploy` job then attached both custom domains. The outage lasted only that re-run.
+- **The apex needs a placeholder record.** A redirect rule only fires for a proxied hostname, so
+  after removing the apex from Pages (which deleted its CNAME) a proxied `A` record
+  `ashleyconnor.co.uk → 192.0.2.1` was added. It never reaches an origin: the redirect answers first.
+- `pnpm verify:live` passed 46/46 against the real domains after the deploy.
+- The dead `AWS_*` repo secrets are deleted.
+- **Still open:** Cloudflare refused to delete the Pages project because it "has too many deployments
+  to be deleted". Its guide (https://cfl.re/3CXesIn) deletes the old deployments through the API
+  first, which needs a token with Pages Edit. Until then the project only serves
+  `blog-fo6w.pages.dev`; it has no custom domains.
