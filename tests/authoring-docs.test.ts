@@ -79,6 +79,17 @@ describe('README Deploying section', () => {
     }
   });
 
+  it('says the workers.dev subdomain must exist before the first deploy, unverified', () => {
+    const text = deploying();
+    expect(text).toMatch(/`?workers\.dev`? subdomain must exist[^]*?not verified/);
+  });
+
+  it('says the production Lighthouse run, which enforces is-crawlable, is manual and not in CI', () => {
+    const text = deploying();
+    expect(text).toContain('pnpm build && pnpm lighthouse');
+    expect(text).toMatch(/manual[^.]*not part of\s+CI/);
+  });
+
   it('no longer calls PR previews planned', () => {
     expect(readme()).not.toMatch(/previews[^.]*planned/i);
   });
@@ -91,15 +102,18 @@ describe('docs/cutover.md', () => {
     expect(existsSync(join(root, 'docs/cutover.md'))).toBe(true);
   });
 
-  it('lists the cutover steps in order, deleting DNS records before the cutover deploy', () => {
+  it('lists the cutover steps in order: merge first, then remove the Pages domains and DNS, then re-run deploy', () => {
     const text = runbook();
     const steps = [
       'pnpm verify:live --blog https://blog.',
       '"custom_domain": true',
       'Workers Routes',
+      'Merge the cutover PR',
       'remove the custom domains from the Pages project',
       'delete the `www` CNAME',
-      'Merge the cutover PR',
+      'The outage starts here',
+      'Re-run failed jobs',
+      'The outage ends',
       'apex',
       'pnpm verify:live`',
       'Delete the Pages project',
@@ -112,6 +126,13 @@ describe('docs/cutover.md', () => {
       expect(at, `"${step}" should appear after the previous step`).toBeGreaterThan(last);
       last = at;
     }
+  });
+
+  it('states how long the outage lasts: the deploy re-run only, not the checks', () => {
+    const text = runbook();
+    expect(text).toMatch(/outage[^.]*\d+[–-]\d+ minutes/i);
+    expect(text).toContain('`checks` is already green');
+    expect(text).toMatch(/expected[^.]*not verified|not verified[^.]*expected/i);
   });
 
   it('marks who does each step', () => {

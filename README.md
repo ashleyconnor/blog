@@ -102,6 +102,11 @@ gh secret set CLOUDFLARE_ACCOUNT_ID --body <id>
 
 Never paste the token into a chat or commit it.
 
+The account's `workers.dev` subdomain must exist before the first `main` deploy, or the deploy has
+no `workers.dev` URL to publish to. Check it under Workers & Pages: the overview shows the
+subdomain. If the dashboard asks you to set one, set it once. This is not verified against a
+fresh account.
+
 ### What runs when (`.github/workflows/site.yml`)
 
 - **Every PR and push**: checks (`pnpm test`, `pnpm check`, `pnpm build`).
@@ -117,8 +122,10 @@ Never paste the token into a chat or commit it.
 Each PR gets one comment, marked `<!-- site-previews -->`. It names the commit it was built from
 and links the Blog and TIL preview URLs. Every push updates the same comment, so the links are
 always for the latest commit. Previews show drafts and are noindex. For that reason the Lighthouse
-`is-crawlable` audit is skipped against them. A local `pnpm build && pnpm lighthouse` run still
-enforces it.
+`is-crawlable` audit is skipped against them.
+
+The production-build Lighthouse run, which does enforce `is-crawlable`, is manual and not part of
+CI. Run it locally with `pnpm build && pnpm lighthouse`.
 
 ### Checking a deploy
 

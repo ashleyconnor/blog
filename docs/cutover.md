@@ -59,18 +59,26 @@ Do the steps in order.
    enough. If the deploy fails with an authorisation error, read the error code and adjust the
    token.
 
-4. **Ashley (dashboard/merge)**: In Workers & Pages, remove the custom domains from the Pages project:
-   `www.ashleyconnor.co.uk`, plus `til.ashleyconnor.co.uk` if it is there.
+4. **Ashley (dashboard/merge)**: Merge the cutover PR while Pages still serves www. The push run's
+   `checks` job must pass. Its `deploy` job then probably fails, because the `www` CNAME and the
+   Pages project still hold the hostname, so Cloudflare refuses the Worker Custom Domain. That
+   failure is expected but not verified, and it is harmless: Pages keeps serving. If `deploy` goes
+   green instead, stop and check which service answers www before going on. Keep the run's page
+   open for step 6.
 
-5. **Ashley (dashboard/merge)**: Do this right before the merge. In DNS for `ashleyconnor.co.uk`,
-   delete the `www` CNAME that points at Pages, and any `til` record. Cloudflare refuses a Worker
-   Custom Domain on a hostname that already has a CNAME record, and removing the domain from the
-   Pages project (step 4) does not delete it. **The outage starts here.** www stops resolving until
-   the deploy in step 6 finishes, so do steps 5 and 6 together.
+5. **Ashley (dashboard/merge)**: In Workers & Pages, remove the custom domains from the Pages project:
+   `www.ashleyconnor.co.uk`, plus `til.ashleyconnor.co.uk` if it is there. Then, in DNS for
+   `ashleyconnor.co.uk`, delete the `www` CNAME that points at Pages, and any `til` record.
+   Removing the domain from the Pages project does not delete the CNAME, and Cloudflare refuses a
+   Worker Custom Domain on a hostname that still has one. **The outage starts here**, when the Pages
+   custom domain is removed: www stops serving until step 6 finishes.
 
-6. **Ashley (dashboard/merge)**: Merge the cutover PR. The `deploy` job runs `wrangler deploy` for
-   both Workers, which creates the custom domains and their DNS records. **The outage ends** when
-   the job is green. If the job fails, use the rollback below.
+6. **Ashley (dashboard/merge)**: Immediately, on the step 4 run, use **Re-run failed jobs**. Because
+   `checks` is already green, this reruns only `deploy` (about 3–4 minutes). It runs
+   `wrangler deploy` for both Workers, which creates the custom domains and their DNS records.
+   **The outage ends** when the re-run `deploy` is green. The expected outage is 4–6 minutes: a
+   minute or two for the step 5 edits, plus the `deploy` re-run, with no `checks` run inside it.
+   If the re-run fails, use the rollback below.
 
 7. **Ashley (dashboard/merge)**: Add or keep the zone redirect rule that sends the apex
    `ashleyconnor.co.uk` to `https://www.ashleyconnor.co.uk` with a 301, keeping the path and
