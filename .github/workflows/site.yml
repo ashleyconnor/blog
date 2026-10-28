@@ -1,0 +1,248 @@
+# Checks every change, previews same-repo PRs on Cloudflare (with a Lighthouse gate), removes the
+# previews when the PR closes, and deploys `main` to the `blog` and `til` Workers.
+#
+# The Cloudflare jobs need the CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repo secrets. Without
+# them they skip with a notice, so the workflow stays green until the secrets are added.
+name: Site
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  checks:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The blog build prints the resume PDF with Playwright.
+      - run: pnpm exec playwright install --with-deps chromium-headless-shell
+      - run: pnpm test
+      - run: pnpm check
+      - run: pnpm build
+
+  preview:
+    if: >-
+      github.event_name == 'pull_request' && github.event.action != 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    needs: checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Check Cloudflare secrets
+        id: secrets
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$TOKEN" ] || [ -z "$ACCOUNT" ]; then
+            echo "::notice title=No Cloudflare secrets::CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID is not set, so the PR previews are skipped."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.secrets.outputs.ready == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - if: steps.secrets.outputs.ready == 'true'
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+      - if: steps.secrets.outputs.ready == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - if: steps.secrets.outputs.ready == 'true'
+        run: pnpm install --frozen-lockfile
+      - if: steps.secrets.outputs.ready == 'true'
+        run: pnpm exec playwright install --with-deps chromium-headless-shell
+      - name: Build with drafts, marked noindex
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          PUBLIC_SHOW_DRAFTS: 'true'
+          PREVIEW: 'true'
+        run: pnpm build
+      - name: Upload the previews
+        id: upload
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          for app in blog til; do
+            json=$(cd "apps/$app" && pnpm exec wrangler preview --name "pr-$PR" --json)
+            # The JSON object is `{ "preview": { "urls": [...] }, "deployment": {...} }`; skip any line
+            # wrangler logs before it.
+            url=$(printf '%s\n' "$json" | sed -n '/^{/,$p' | jq -er '.preview.urls[0]')
+            case "$url" in http://* | https://*) ;; *) url="https://$url" ;; esac
+            echo "$app: $url"
+            echo "$app=${url%/}" >> "$GITHUB_OUTPUT"
+          done
+      - name: Comment the preview URLs
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          BLOG_URL: ${{ steps.upload.outputs.blog }}
+          TIL_URL: ${{ steps.upload.outputs.til }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          marker='<!-- site-previews -->'
+          body="$marker
+          **Previews** (drafts shown, noindex) for $SHA:
+
+          - Blog: $BLOG_URL
+          - TIL: $TIL_URL"
+          id=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments" \
+            --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | contains(\"$marker\"))) | .id" | tail -n 1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -f body="$body" > /dev/null
+          else
+            gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -f body="$body" > /dev/null
+          fi
+      # Every page must score 100 in each category, on desktop and on mobile.
+      - name: Lighthouse
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          LHCI_BLOG_URL: ${{ steps.upload.outputs.blog }}
+          LHCI_TIL_URL: ${{ steps.upload.outputs.til }}
+        run: pnpm lighthouse
+      - name: Keep the Lighthouse reports
+        if: always() && steps.secrets.outputs.ready == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: lighthouse-pr-${{ github.event.pull_request.number }}
+          path: .lighthouseci/
+          include-hidden-files: true
+          if-no-files-found: ignore
+
+  cleanup:
+    if: >-
+      github.event_name == 'pull_request' && github.event.action == 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Check Cloudflare secrets
+        id: secrets
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$TOKEN" ] || [ -z "$ACCOUNT" ]; then
+            echo "::notice title=No Cloudflare secrets::CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID is not set, so there are no previews to remove."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      # The default, `refs/pull/<n>/merge`, can be gone once the PR is merged or closed. This only
+      # needs the apps' wrangler configs, which the base commit has.
+      - if: steps.secrets.outputs.ready == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+      - if: steps.secrets.outputs.ready == 'true'
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+      - if: steps.secrets.outputs.ready == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - if: steps.secrets.outputs.ready == 'true'
+        run: pnpm install --frozen-lockfile
+      - name: Delete the previews
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          for app in blog til; do
+            if out=$(cd "apps/$app" && pnpm exec wrangler preview delete --name "pr-$PR" --skip-confirmation 2>&1); then
+              printf '%s\n' "$out"
+            elif printf '%s\n' "$out" | grep -qiE 'not found|does not exist|10007|404'; then
+              # No such preview or Worker (never uploaded: the secrets came later, or the build
+              # failed), so there is nothing to remove.
+              printf '%s\n' "$out"
+              echo "::notice::$app has no preview pr-$PR; nothing to delete."
+            else
+              printf '%s\n' "$out"
+              exit 1
+            fi
+          done
+      # Needs only `github.token`, so it runs with or without the Cloudflare secrets.
+      - name: Mark the comment removed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          marker='<!-- site-previews -->'
+          body="$marker
+          **Previews** removed: the PR is closed."
+          id=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments" \
+            --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | contains(\"$marker\"))) | .id" | tail -n 1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -f body="$body" > /dev/null
+          fi
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Cloudflare secrets
+        id: secrets
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$TOKEN" ] || [ -z "$ACCOUNT" ]; then
+            echo "::notice title=No Cloudflare secrets::CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID is not set, so the deploy is skipped."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.secrets.outputs.ready == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - if: steps.secrets.outputs.ready == 'true'
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+      - if: steps.secrets.outputs.ready == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - if: steps.secrets.outputs.ready == 'true'
+        run: pnpm install --frozen-lockfile
+      - if: steps.secrets.outputs.ready == 'true'
+        run: pnpm exec playwright install --with-deps chromium-headless-shell
+      - name: Production build
+        if: steps.secrets.outputs.ready == 'true'
+        run: pnpm build
+      - name: Deploy to workers.dev
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          for app in blog til; do
+            (cd "apps/$app" && pnpm exec wrangler deploy)
+          done

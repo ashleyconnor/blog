@@ -190,6 +190,9 @@ importers:
       wrangler:
         specifier: 4.149.0
         version: 4.149.0(@types/node@24.19.2)
+      yaml:
+        specifier: 2.9.1
+        version: 2.9.1
 
   apps/blog:
     dependencies:
