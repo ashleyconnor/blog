@@ -55,3 +55,9 @@ export const EXTRA_URLS = ['/til', '/til/', '/sitemap.xml', ...LEGACY_IMAGES.map
 export function legacyUrls(): string[] {
   return [...legacySitemapUrls(), ...EXTRA_URLS];
 }
+
+/**
+ * Legacy URLs that must be served as they are, with a 200 and no redirect: pages the new site builds
+ * at the exact same path (an app's privacy policy links to `/instaboxd/privacy/`).
+ */
+export const DIRECT_URLS: ReadonlySet<string> = new Set(['/instaboxd/privacy/'].map((path) => new URL(path, BLOG_ORIGIN).href));
