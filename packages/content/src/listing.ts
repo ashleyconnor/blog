@@ -22,6 +22,8 @@ export interface StreamItem {
   unlisted: boolean;
   /** Old Jekyll paths that redirect here (see `buildRedirects`). */
   legacyUrls?: string[];
+  /** The rendered body, for full-content feeds (set by `withHtml` from `@ac/content/entry-html`). */
+  html?: string;
 }
 
 export interface MonthGroup {

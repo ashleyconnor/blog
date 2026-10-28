@@ -368,6 +368,16 @@ describe('feed, sitemap and robots', () => {
     expect(xml).not.toContain('A basic post');
   });
 
+  it('carries each TIL in full, its images on the TIL origin, and pages advertise the feed', () => {
+    const xml = file(dist, 'feed.xml');
+    const entry = xml.slice(xml.indexOf('<title>Reading a file in Elixir</title>'));
+    const content = entry.match(/<content:encoded>([\s\S]*?)<\/content:encoded>/)?.[1] ?? '';
+    expect(content).toMatch(/src=(?:"|&quot;)https:\/\/til\.ashleyconnor\.co\.uk\/_astro\//);
+    expect(readFileSync(join(dist, READ_FILE, 'index.html'), 'utf8')).toContain(
+      `<link rel="alternate" type="application/rss+xml" title="Ashley Connor's TIL" href="${ORIGIN}/feed.xml">`,
+    );
+  });
+
   it('has its own sitemap, without unlisted entries or drafts', () => {
     const text = sitemapText(dist);
     expect(text).toContain(`<loc>${ORIGIN}/</loc>`);

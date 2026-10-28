@@ -26,5 +26,23 @@ describe('feedItem', () => {
     const item = feedItem(tilItem({ id: '2022-12-01-elixir', data: { ...data, excerpt: undefined } }));
     expect(item.link).toBe('https://til.ashleyconnor.co.uk/2022-12-01-elixir/');
     expect(item.description).toBeUndefined();
+    expect(item).not.toHaveProperty('content');
+  });
+
+  it('drops scripts from the full content (code-block copy buttons do nothing in a feed reader)', () => {
+    const html = '<pre>x</pre><script type="module">copy()</script><p>after</p>';
+    const item = feedItem({ ...postItem({ id: '2025-04-23-basic-post', data }), html }, 'https://www.ashleyconnor.co.uk');
+    expect(item.content).toBe('<pre>x</pre><p>after</p>');
+  });
+
+  it('carries the rendered post as full content, with site-relative links and images made absolute', () => {
+    const html =
+      '<p><a href="/2022/04/03/pay-transparency/">a post</a>, <a href="#why">a heading</a>, ' +
+      '<a href="https://example.com/x">elsewhere</a></p><img src="/_astro/shot.webp" alt="A shot">';
+    const item = feedItem({ ...postItem({ id: '2025-04-23-basic-post', data }), html }, 'https://www.ashleyconnor.co.uk');
+    expect(item.content).toBe(
+      '<p><a href="https://www.ashleyconnor.co.uk/2022/04/03/pay-transparency/">a post</a>, <a href="#why">a heading</a>, ' +
+        '<a href="https://example.com/x">elsewhere</a></p><img src="https://www.ashleyconnor.co.uk/_astro/shot.webp" alt="A shot">',
+    );
   });
 });
