@@ -58,7 +58,10 @@ module.exports = {
       // stricter: one 100 among them is enough.
       aggregationMethod: 'optimistic',
       assertions: {
-        'categories:performance': perfect,
+        // Previews on mobile score 0.99: the simulated slow-4G connection pays HTTPS setup round trips
+        // that a local http server does not, ahead of four preloaded fonts. Accepted for now
+        // (Ashley, 2026-10-27); trimming the font preloads is the follow-up to get back to 100.
+        'categories:performance': remote && preset === 'mobile' ? ['error', { minScore: 0.99 }] : perfect,
         'categories:accessibility': perfect,
         'categories:best-practices': perfect,
         'categories:seo': perfect,

@@ -112,8 +112,9 @@ fresh account.
 - **Every PR and push**: checks (`pnpm test`, `pnpm check`, `pnpm build`).
 - **PR opened or updated** (PRs from this repo only): builds both sites with drafts shown and
   `PREVIEW=true`, which sends `X-Robots-Tag: noindex`. It then uploads them with
-  `wrangler preview --name pr-<n>` and runs Lighthouse against the previews. The Lighthouse reports
-  are uploaded as a workflow artifact.
+  `wrangler preview --name pr-<n>` and runs Lighthouse against the previews: 100 in every category,
+  except mobile performance, which accepts 0.99 on the previews for now. The Lighthouse reports are
+  uploaded as a workflow artifact.
 - **PR closed**: deletes both previews and edits the preview comment to say they were removed.
 - **Push to `main`**: deploys both Workers to `workers.dev`.
 
