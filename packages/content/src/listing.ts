@@ -42,6 +42,16 @@ export function showDrafts(): boolean {
   return (import.meta.env?.PUBLIC_SHOW_DRAFTS ?? process.env.PUBLIC_SHOW_DRAFTS) === 'true';
 }
 
+/**
+ * Whether this is a PR preview build (`PREVIEW=true`), whose responses are all `noindex`. Read like
+ * `showDrafts()`: Astro inlines `import.meta.env` at build time; `process.env` covers code outside Vite.
+ */
+export function isPreviewBuild(): boolean {
+  // The cast keeps `tsc` (which has no Vite types here) happy; it compiles to `import.meta.env?.PREVIEW`.
+  const env = (import.meta as { env?: Record<string, string | undefined> }).env;
+  return (env?.PREVIEW ?? process.env.PREVIEW) === 'true';
+}
+
 /** Unlisted entries are never public; drafts are public only while previewing them. */
 export function isPublic(
   item: Pick<StreamItem, 'draft' | 'unlisted'>,

@@ -1,0 +1,14 @@
+// A static-assets-only Worker: no script and no bindings. Cloudflare serves `dist/` and applies its
+// `_redirects` and `_headers`. Routes and custom domains are added at cutover.
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "blog",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "preview_urls": true,
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  }
+}
