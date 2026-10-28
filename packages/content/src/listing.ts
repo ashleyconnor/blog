@@ -52,6 +52,14 @@ export function isPreviewBuild(): boolean {
   return (env?.PREVIEW ?? process.env.PREVIEW) === 'true';
 }
 
+/**
+ * Whether every response must be `noindex`: a preview build, or any build that shows drafts (defence in
+ * depth, so a drafts build without `PREVIEW` is still never indexed). A production build sets neither.
+ */
+export function isNoindexBuild(): boolean {
+  return isPreviewBuild() || showDrafts();
+}
+
 /** Unlisted entries are never public; drafts are public only while previewing them. */
 export function isPublic(
   item: Pick<StreamItem, 'draft' | 'unlisted'>,

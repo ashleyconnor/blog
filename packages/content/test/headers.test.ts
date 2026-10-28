@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildHeaders } from '../src/headers';
+import { isNoindexBuild } from '../src/listing';
 
 const PRODUCTION = `/_astro/*
   Cache-Control: public, max-age=31536000, immutable
@@ -56,5 +59,38 @@ describe('buildHeaders', () => {
       ]),
     );
     expect(buildHeaders({ preview })).not.toContain('Content-Security-Policy');
+  });
+});
+
+describe('isNoindexBuild', () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it.each([
+    [undefined, undefined, false],
+    ['false', 'false', false],
+    ['true', undefined, true],
+    [undefined, 'true', true],
+    ['true', 'true', true],
+  ])('PREVIEW=%s PUBLIC_SHOW_DRAFTS=%s: %s', (preview, drafts, expected) => {
+    vi.stubEnv('PREVIEW', preview);
+    vi.stubEnv('PUBLIC_SHOW_DRAFTS', drafts);
+    expect(isNoindexBuild()).toBe(expected);
+  });
+
+  it('a drafts build without PREVIEW still sends X-Robots-Tag: noindex', () => {
+    vi.stubEnv('PREVIEW', undefined);
+    vi.stubEnv('PUBLIC_SHOW_DRAFTS', 'true');
+    expect(buildHeaders({ preview: isNoindexBuild() })).toContain('X-Robots-Tag: noindex');
+  });
+
+  it('a production build (neither flag) never sends it', () => {
+    vi.stubEnv('PREVIEW', undefined);
+    vi.stubEnv('PUBLIC_SHOW_DRAFTS', undefined);
+    expect(buildHeaders({ preview: isNoindexBuild() })).not.toContain('X-Robots-Tag');
+  });
+
+  it.each(['blog', 'til'])("%s's _headers endpoint uses it", (app) => {
+    const source = readFileSync(join(import.meta.dirname, '../../../apps', app, 'src/pages/[headers].ts'), 'utf8');
+    expect(source).toContain('buildHeaders({ preview: isNoindexBuild() })');
   });
 });
