@@ -1,0 +1,15 @@
+---
+interface Props {
+  title: string;
+  /** Small mono label above the title, e.g. "Tag". */
+  eyebrow?: string;
+}
+
+const { title, eyebrow } = Astro.props;
+---
+
+<header class="pt-10 pb-2">
+  {eyebrow && <p class="mb-2 font-mono text-[11px] tracking-wider text-muted uppercase">{eyebrow}</p>}
+  <h1 class="font-heading text-3xl leading-[1.15] font-bold text-head md:text-4xl">{title}</h1>
+  <slot />
+</header>

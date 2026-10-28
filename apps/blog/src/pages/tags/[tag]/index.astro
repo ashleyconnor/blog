@@ -1,0 +1,46 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { loadTags } from '@ac/content';
+import BaseLayout from '@ac/ui/components/BaseLayout.astro';
+import StreamList from '@ac/ui/components/StreamList.astro';
+import PageHeader from '../../../components/PageHeader.astro';
+import { publicStream } from '../../../lib/stream';
+
+// Every tag gets a page, even one with nothing public yet: post pages (unlisted ones included)
+// link all their tags, and those links must not 404. Empty tag pages are kept out of search.
+export const getStaticPaths = (async () => {
+  const stream = await publicStream();
+  return [...loadTags().values()].map((tag) => ({
+    params: { tag: tag.slug },
+    props: { tag, items: stream.filter((item) => item.tags.includes(tag.slug)) },
+  }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { tag, items } = Astro.props;
+const count = `${items.length} ${items.length === 1 ? 'entry' : 'entries'}`;
+---
+
+<BaseLayout
+  title={`${tag.name} · Ashley Connor`}
+  description={`Posts, TILs and photos tagged ${tag.name}.`}
+  canonical={new URL(`/tags/${tag.slug}/`, Astro.site)}
+  noindex={items.length === 0}
+>
+  <PageHeader title={tag.name} eyebrow="Tag">
+    <p class="mt-2 font-mono text-xs text-muted">{count}</p>
+  </PageHeader>
+  {
+    items.length > 0 ? (
+      <StreamList items={items} />
+    ) : (
+      <p class="mt-6 text-muted">
+        Nothing tagged {tag.name} yet.{' '}
+        <a href="/tags/" class="text-post underline underline-offset-4 hover:text-head">
+          See all tags
+        </a>
+      </p>
+    )
+  }
+</BaseLayout>

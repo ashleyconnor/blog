@@ -1,0 +1,81 @@
+# Rendered at /resume/ and printed to /resume.pdf at build time. Schema: packages/content/src/resume.ts.
+# Transcribed verbatim from the April 2025 PDF (assets/pdfs/resume.pdf). `tech` lists only
+# technologies that role's bullets name. A role without `end` is shown as "Present".
+name: Ashley Connor
+location: San Diego, United States
+links:
+  - label: me@ashleyconnor.co.uk
+    href: mailto:me@ashleyconnor.co.uk
+
+experience:
+  - company: HashiCorp
+    role: Senior Engineer
+    location: San Diego, California
+    start: July 2021
+    bullets:
+      - >-
+        Spearheaded the infrastructure migration and successful release of the Vault Radar project,
+        ensuring a timely launch for HashiConf 2023. Demonstrated leadership in cross-functional
+        team collaboration and project management.
+      - >-
+        Co-designed and implemented Personal Remote Development Environments, enhancing
+        developer productivity and enabling fully integrated development across the entire HashiCorp
+        Cloud Platform.
+      - >-
+        Led the automation of runtime configuration through the creation of an infrastructure
+        configuration API, significantly reducing manual intervention.
+      - >-
+        Designed and implemented release tooling and build pipelines standardizing the software build
+        and distribution process across open-source and enterprise teams.
+
+  - company: Capital One Canada
+    role: Principal Associate Software Developer
+    location: Toronto, Canada
+    start: August 2018
+    end: March 2021
+    bullets:
+      - >-
+        DevOps engineer working on proprietary AWS cloud delivery pipelines and tools. Our team is
+        one of several under “One Pipeline” which handles the provisioning of all AWS infrastructure
+        and deployments for over 10,000 developers. Focusing on compliance, security and resiliency
+      - >-
+        Tech lead and primary owner of the “serverless” tooling solution which provisions over 7,500
+        AWS Lambda functions for over a hundred teams. Also maintainer of Capital One’s S3 tools
+        that ensure data security and integrity within the enterprise.
+      - >-
+        Coordinated a quarterly disaster recovery exercise which emulates an AWS region blackout of
+        production systems for the Canada Software Studio.
+    tech: [AWS, AWS Lambda, S3]
+
+  - company: Ontario Teachers’ Pension Plan
+    role: Senior Software Developer
+    location: Toronto, Canada
+    start: June 2015
+    end: August 2018
+    bullets:
+      - >-
+        Lead developer of “Member Web” - Teachers’ customer portal used by 300,000 active and
+        retired members. I developed a re-write of the site from a monolithic Java application using
+        the Wicket framework, to an interactive front-end application integrated with RESTful APIs.
+        I also automated the provisioning of development environments and deployments of web
+        applications using Vagrant/Chef.
+    tech: [Java, Wicket, Vagrant, Chef]
+
+  - company: Sportech PLC (Football Pools)
+    role: Agile Web Developer
+    location: Liverpool, UK
+    start: May 2014
+    end: May 2015
+
+  - company: Sensible Development
+    role: Software Developer
+    location: Brighton, UK
+    start: Aug 2012
+    end: Mar 2014
+
+education:
+  - institution: University of Liverpool
+    degree: BSc. Computer Science
+    location: Liverpool, UK
+    start: '2009'
+    end: '2012'

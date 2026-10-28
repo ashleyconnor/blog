@@ -1,0 +1,140 @@
+---
+import { loadResume } from '@ac/content';
+import BaseLayout from '@ac/ui/components/BaseLayout.astro';
+
+// Also printed to /resume.pdf after the build (scripts/resume-pdf.ts) using the print styles
+// in @ac/ui's print.css, so keep it static: no client JS.
+const { name, headline, location, links, summary, experience, education, skills } = loadResume();
+
+const description = summary ?? `${name}'s resume: work experience and education.`;
+const dates = (start: string, end?: string) => `${start} – ${end ?? 'Present'}`;
+
+// The timeline: a hairline down the left of the list, with a dot centred on it for each entry.
+// The margin keeps the dots inside the column: in the PDF the column starts at the page margin,
+// and anything hanging past it is clipped.
+const timeline = 'ml-1.5 border-l border-line';
+const entry = 'relative pl-6 print:break-inside-avoid';
+const dot = 'absolute top-1.5 -left-[5px] size-[9px] rounded-full ring-4 ring-bg';
+const sectionHeading = 'mb-6 font-mono text-xs font-medium tracking-wider text-muted uppercase';
+const chip = 'rounded border border-line bg-surface px-2 py-0.5 font-mono text-[11px] leading-5 text-text';
+---
+
+<BaseLayout title={`Resume · ${name}`} description={description} canonical={new URL('/resume/', Astro.site)}>
+  <article class="py-10 print:py-0">
+    <header class="mb-10 flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+      <div>
+        <h1 class="font-heading text-3xl leading-[1.15] font-bold text-head md:text-4xl">{name}</h1>
+        {headline && <p class="mt-2 text-lg text-text">{headline}</p>}
+        <p class="mt-2 flex flex-wrap gap-x-2 font-mono text-xs text-muted">
+          <span>{location}</span>
+          {
+            links.map(({ label, href }) => (
+              <span>
+                <span aria-hidden="true">· </span>
+                <a href={href} class="text-muted underline-offset-4 hover:text-head hover:underline">
+                  {label}
+                </a>
+              </span>
+            ))
+          }
+        </p>
+      </div>
+      <a
+        href="/resume.pdf"
+        download
+        class="inline-flex items-center gap-2 rounded-md border border-line bg-surface px-3 py-2 text-sm font-medium text-head hover:border-post print:hidden"
+      >
+        <svg
+          viewBox="0 0 16 16"
+          width="16"
+          height="16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          focusable="false"
+          class="shrink-0 text-post"
+        >
+          <path d="M8 2.5v8M4.75 7.25 8 10.5l3.25-3.25M3 13.5h10"></path>
+        </svg>
+        Download PDF
+      </a>
+    </header>
+
+    {summary && <p class="mb-10 leading-relaxed text-text">{summary}</p>}
+
+    <section aria-labelledby="experience">
+      <h2 id="experience" class={sectionHeading}>Experience</h2>
+      <ol class={timeline}>
+        {
+          experience.map((job) => (
+            <li data-experience class:list={[entry, 'pb-10 last:pb-0']}>
+              <span aria-hidden="true" class:list={[dot, 'bg-post']} />
+              <p class="font-mono text-xs text-muted">
+                {dates(job.start, job.end)} · {job.location}
+              </p>
+              <h3 class="mt-1 font-heading text-lg leading-snug font-bold text-head">
+                {job.role} <span class="font-medium text-muted">·</span> <span class="text-post">{job.company}</span>
+              </h3>
+              {job.bullets.length > 0 && (
+                <ul class="mt-3 list-disc space-y-2 pl-5 marker:text-muted">
+                  {job.bullets.map((bullet) => (
+                    <li class="text-[0.9375rem] leading-relaxed text-text">{bullet}</li>
+                  ))}
+                </ul>
+              )}
+              {job.tech.length > 0 && (
+                <ul aria-label="Technologies" class="mt-3 flex flex-wrap gap-1.5">
+                  {job.tech.map((tech) => (
+                    <li class={chip}>{tech}</li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    {
+      education.length > 0 && (
+        <section aria-labelledby="education" class="mt-12">
+          <h2 id="education" class={sectionHeading}>
+            Education
+          </h2>
+          <ol class={timeline}>
+            {education.map((school) => (
+              <li class:list={[entry, 'pb-8 last:pb-0']}>
+                <span aria-hidden="true" class:list={[dot, 'bg-muted']} />
+                <p class="font-mono text-xs text-muted">
+                  {dates(school.start, school.end)} · {school.location}
+                </p>
+                <h3 class="mt-1 font-heading text-lg leading-snug font-bold text-head">
+                  {school.degree} <span class="font-medium text-muted">·</span>{' '}
+                  <span class="text-post">{school.institution}</span>
+                </h3>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )
+    }
+
+    {
+      skills.length > 0 && (
+        <section aria-labelledby="skills" class="mt-12">
+          <h2 id="skills" class={sectionHeading}>
+            Skills
+          </h2>
+          <ul class="flex flex-wrap gap-1.5">
+            {skills.map((skill) => (
+              <li class={chip}>{skill}</li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+  </article>
+</BaseLayout>

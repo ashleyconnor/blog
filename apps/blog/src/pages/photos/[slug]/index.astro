@@ -1,0 +1,60 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { getCollection, render } from 'astro:content';
+import { formatDate, showDrafts, stripMarkdown } from '@ac/content';
+import BaseLayout from '@ac/ui/components/BaseLayout.astro';
+import Gallery from '@ac/ui/components/Gallery.astro';
+import Prose from '@ac/ui/components/Prose.astro';
+import TypePill from '@ac/ui/components/TypePill.astro';
+
+// Unlisted galleries are built (reachable by URL); drafts only when previewing them. The slug is
+// the gallery's folder name, matching the stream's `/photos/<id>/` links.
+export const getStaticPaths = (async () => {
+  const drafts = showDrafts();
+  const galleries = await getCollection('photos', ({ data }) => drafts || !data.draft);
+  return galleries.map((gallery) => ({ params: { slug: gallery.id }, props: { gallery } }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { gallery } = Astro.props;
+const { title, date, tags, excerpt, draft, images } = gallery.data;
+const { Content } = await render(gallery);
+---
+
+<BaseLayout
+  title={title}
+  description={excerpt && stripMarkdown(excerpt)}
+  canonical={new URL(`/photos/${gallery.id}/`, Astro.site)}
+  draft={draft}
+>
+  <article class="py-10">
+    <header class="mb-8">
+      <TypePill type="photos" />
+      <h1 class="mt-3 mb-2 font-heading text-3xl leading-[1.15] font-bold text-head md:text-4xl">{title}</h1>
+      <p class="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-muted">
+        <time datetime={date.toISOString()}>{formatDate(date)}</time>
+        <span aria-hidden="true">·</span>
+        <span>{images.length} {images.length === 1 ? 'photo' : 'photos'}</span>
+        {
+          tags.map((tag) => (
+            <>
+              <span aria-hidden="true">·</span>
+              <a href={`/tags/${tag}/`} class="text-muted underline-offset-4 hover:text-head hover:underline">
+                #{tag}
+              </a>
+            </>
+          ))
+        }
+      </p>
+    </header>
+    {
+      gallery.body?.trim() && (
+        <Prose>
+          <Content />
+        </Prose>
+      )
+    }
+    <Gallery images={images} />
+  </article>
+</BaseLayout>

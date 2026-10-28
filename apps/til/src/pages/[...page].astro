@@ -1,0 +1,37 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { getCollection } from 'astro:content';
+import { buildStream, showDrafts, tilItem } from '@ac/content';
+import BaseLayout from '@ac/ui/components/BaseLayout.astro';
+import Pager from '@ac/ui/components/Pager.astro';
+import StreamList from '@ac/ui/components/StreamList.astro';
+import TilNav from '../components/TilNav.astro';
+import { TIL_DESCRIPTION, tilPath } from '../site';
+
+// Every public TIL, newest first, linking to its page on this site. Page 1 is `/`, later pages
+// `/page/N/` as on the blog: the rest parameter carries the `page/` prefix, and `format` rewrites
+// the URLs `paginate` links to (`/N/`) to match.
+export const getStaticPaths = (async ({ paginate }) => {
+  const items = (await getCollection('til')).map((til) => ({ ...tilItem(til), href: tilPath(til.id) }));
+  const pages = paginate(buildStream(items, { showDrafts: showDrafts() }), {
+    pageSize: 30,
+    format: (url) => url.replace(/^\/(\d+)\/$/, '/page/$1/'),
+  });
+  return pages.map(({ params, props }) => ({ params: { page: params.page && `page/${params.page}` }, props }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { page } = Astro.props;
+const title = page.currentPage === 1 ? "Ashley Connor's TIL" : `Ashley Connor's TIL · Page ${page.currentPage}`;
+---
+
+<BaseLayout title={title} description={TIL_DESCRIPTION} canonical={new URL(page.url.current, Astro.site)}>
+  <TilNav slot="nav" />
+  <header class="pt-10 pb-2">
+    <h1 class="font-heading text-3xl leading-[1.15] font-bold text-head md:text-4xl">Today I Learned</h1>
+    <p class="mt-2 text-muted">{TIL_DESCRIPTION}</p>
+  </header>
+  <StreamList items={page.data} />
+  <Pager current={page.currentPage} last={page.lastPage} prev={page.url.prev} next={page.url.next} />
+</BaseLayout>

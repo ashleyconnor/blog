@@ -1,0 +1,45 @@
+---
+// Typography for rendered Markdown/MDX. Every colour is a design token: the plugin's own
+// `--tw-prose-*` variables are all pointed at them, so nothing falls back to a default.
+---
+
+<div class="prose max-w-none text-[1.0625rem] prose-headings:scroll-mt-6 prose-headings:font-heading prose-headings:font-bold prose-a:underline-offset-4 prose-img:rounded-lg">
+  <slot />
+</div>
+
+<style>
+  .prose {
+    --tw-prose-body: var(--color-text);
+    --tw-prose-headings: var(--color-head);
+    --tw-prose-lead: var(--color-text);
+    --tw-prose-links: var(--color-post);
+    --tw-prose-bold: var(--color-head);
+    --tw-prose-counters: var(--color-muted);
+    --tw-prose-bullets: var(--color-muted);
+    --tw-prose-hr: var(--color-line);
+    --tw-prose-quotes: var(--color-text);
+    --tw-prose-quote-borders: var(--color-line);
+    --tw-prose-captions: var(--color-muted);
+    --tw-prose-kbd: var(--color-head);
+    --tw-prose-kbd-shadows: var(--color-line);
+    --tw-prose-code: var(--color-head);
+    --tw-prose-pre-code: var(--color-text);
+    --tw-prose-pre-bg: var(--color-surface);
+    --tw-prose-th-borders: var(--color-line);
+    --tw-prose-td-borders: var(--color-line);
+  }
+
+  /* Inline code only: fenced blocks are drawn by Expressive Code. */
+  .prose :global(:not(pre) > code) {
+    border: 1px solid var(--color-line);
+    border-radius: 0.375rem;
+    background-color: var(--color-surface);
+    padding: 0.125rem 0.375rem;
+    font-size: 0.875em;
+    font-weight: 400;
+  }
+  .prose :global(:not(pre) > code)::before,
+  .prose :global(:not(pre) > code)::after {
+    content: none;
+  }
+</style>

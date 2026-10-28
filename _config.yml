@@ -91,3 +91,16 @@ exclude:
   - plugins
   - vendor
   - docs
+  - apps
+  - packages
+  - content
+  - templates
+  - scripts
+  - tests
+  - node_modules
+  - package.json
+  - pnpm-lock.yaml
+  - pnpm-workspace.yaml
+  - vitest.config.ts
+  - lighthouserc.cjs
+  - .nvmrc

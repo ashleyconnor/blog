@@ -1,0 +1,43 @@
+---
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  headings: Heading[];
+}
+
+const MIN_HEADINGS = 3;
+
+// The sidebar starts 1.5rem right of the widest `.breakout` (550px either side of the column
+// centre) so the two never overlap, and only where that fits: `3xl` (104rem) leaves room for a
+// 14rem sidebar. Narrower than that the list is a box above the content.
+const items = Astro.props.headings.filter((h) => h.depth === 2 || h.depth === 3);
+---
+
+{
+  items.length >= MIN_HEADINGS && (
+    <nav
+      aria-label="Table of contents"
+      class="mb-8 rounded-lg border border-line bg-surface px-4 py-3 text-sm 3xl:absolute 3xl:top-0 3xl:left-[calc(50%+550px+1.5rem)] 3xl:mb-0 3xl:h-full 3xl:w-56 3xl:border-0 3xl:bg-transparent 3xl:p-0"
+    >
+      <div class="3xl:sticky 3xl:top-8">
+        <p class="mb-2 font-mono text-[11px] uppercase tracking-wider text-muted">On this page</p>
+        <ol class="space-y-1.5">
+          {items.map((h) => (
+            <li class:list={{ 'pl-4': h.depth === 3 }}>
+              <a
+                href={`#${h.slug}`}
+                class="text-muted underline-offset-4 hover:text-head hover:underline focus-visible:text-head"
+              >
+                {h.text}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </nav>
+  )
+}

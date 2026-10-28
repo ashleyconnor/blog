@@ -1,0 +1,13 @@
+---
+import BaseLayout from '@ac/ui/components/BaseLayout.astro';
+import StreamList from '@ac/ui/components/StreamList.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import { publicStream } from '../../lib/stream';
+
+const posts = (await publicStream()).filter((item) => item.type === 'post');
+---
+
+<BaseLayout title="Posts · Ashley Connor" canonical={new URL('/posts/', Astro.site)}>
+  <PageHeader title="Posts" />
+  <StreamList items={posts} />
+</BaseLayout>

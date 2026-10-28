@@ -1,0 +1,11 @@
+# Minimal resume so fixture builds (CONTENT_ROOT=tests/fixtures/content) can render /resume/.
+name: Fixture Person
+location: Testville, UK
+experience:
+  - company: Example Co
+    role: Engineer
+    location: Remote
+    start: Jan 2020
+    bullets:
+      - Built things.
+    tech: [TypeScript]

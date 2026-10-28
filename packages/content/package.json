@@ -1,0 +1,25 @@
+{
+  "name": "@ac/content",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./collections": "./src/collections.ts",
+    "./load-items": "./src/load-items.ts",
+    "./sitemap": "./src/sitemap.ts"
+  },
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "astro": "7.4.2",
+    "github-slugger": "2.0.0",
+    "tinyglobby": "0.2.17",
+    "yaml": "2.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "^6.0.3"
+  }
+}

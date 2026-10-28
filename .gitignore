@@ -2,6 +2,16 @@ _site
 .sass-cache
 .jekyll-metadata
 .env
-public
+/public/
 .tweet-cache/
 .superpowers/
+node_modules/
+dist/
+.astro/
+.lighthouseci/
+# Temporary content copies made by tests
+.tmp/
+.astro-cache/
+
+# Wrangler state (wrangler dev)
+.wrangler/
