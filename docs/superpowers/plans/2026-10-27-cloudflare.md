@@ -15,7 +15,7 @@
   - `wrangler deploy` on `main`.
 - `scripts/verify-live.ts` checks every legacy URL against any pair of origins (`workers.dev` before cutover, the real domains after).
 
-**Tech Stack:** Wrangler 4.154.0 (Workers static assets, `wrangler preview` ≥ 4.135), GitHub Actions, `@lhci/cli` 0.15.1 (already pinned), Vitest 5, Node 24, pnpm 12.15.0.
+**Tech Stack:** Wrangler 4.149.0 (Workers static assets, `wrangler preview` ≥ 4.135), GitHub Actions, `@lhci/cli` 0.15.1 (already pinned), Vitest 5, Node 24, pnpm 12.15.0.
 
 **Spec:** `docs/superpowers/specs/2026-10-26-blog-modernization-design.md`, the sections "Cloudflare", "Delivery order" (step 3: cutover), "Canonical host" and "Drafts"; and Goals 7–9.
 
@@ -72,7 +72,7 @@ Plan 4 of 4. It is stacked on plan 3 (branch `claude/authoring`, PR #43).
   - `packages/content/src/headers.ts` → `buildHeaders(opts: { preview: boolean }): string` (Cloudflare `_headers` text)
   - `apps/blog/src/pages/[headers].ts` and `apps/til/src/pages/[headers].ts` (emit `dist/_headers`, as `[redirects].ts` emits `_redirects`; reuse its pattern)
 - Modify:
-  - root `package.json`: devDependency `wrangler: 4.154.0`; scripts `preview:blog`/`preview:til` (`wrangler dev` on the built dist)
+  - root `package.json`: devDependency `wrangler: 4.149.0`; scripts `preview:blog`/`preview:til` (`wrangler dev` on the built dist)
   - `.gitignore` (`.wrangler/`)
   - `_config.yml` exclude, if needed
 - Test: `packages/content/test/headers.test.ts`, `tests/workers.test.ts`
