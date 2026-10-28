@@ -3,8 +3,13 @@
  * site through permanent (301) redirects only. Production URLs, and production origins in `Location`
  * headers, are mapped to the origins under test, so the same check runs on the `workers.dev` origins
  * before cutover and on the real domains after.
+ *
+ * It verifies status codes and the host each URL ends on, not the destination path: a 301 to the
+ * wrong page on the right site passes here (the build-time tests check where each URL lands).
+ * Every hop must stay on the two origins under test, and `DIRECT_URLS` must answer 200 with no
+ * redirect at all.
  */
-import { BLOG_ORIGIN } from './legacy-urls.ts';
+import { BLOG_ORIGIN, DIRECT_URLS } from './legacy-urls.ts';
 
 export const TIL_ORIGIN = 'https://til.ashleyconnor.co.uk';
 
@@ -39,11 +44,14 @@ const expectedOrigin = (url: URL, origins: Origins) =>
 
 async function verifyUrl(url: string, origins: Origins, fetcher: Fetcher): Promise<Failure | undefined> {
   const expected = expectedOrigin(new URL(url), origins);
+  const allowed = new Set([new URL(origins.blog).origin, new URL(origins.til).origin]);
+  const direct = DIRECT_URLS.has(url);
   const chain: string[] = [];
   const fail = (reason: string): Failure => ({ url, chain, reason });
   let current = toOrigins(new URL(url), origins);
   for (let hop = 0; hop <= MAX_HOPS; hop++) {
     chain.push(current.href);
+    if (!allowed.has(current.origin)) return fail(`redirects off the sites under test, to ${current.origin}`);
     let response: Awaited<ReturnType<Fetcher>>;
     try {
       response = await fetcher(current.href);
@@ -57,6 +65,7 @@ async function verifyUrl(url: string, origins: Origins, fetcher: Fetcher): Promi
     if (status < 300 || status >= 400) return fail(`${current.href} answered ${status}`);
     if (status !== 301) return fail(`${current.href} redirects with ${status}, not 301`);
     if (!location) return fail(`${current.href} redirects with ${status} but no Location header`);
+    if (direct) return fail(`${current.href} must be served directly, but redirects with ${status}`);
     if (hop === MAX_HOPS) break;
     current = toOrigins(new URL(location, current), origins);
   }
@@ -65,9 +74,12 @@ async function verifyUrl(url: string, origins: Origins, fetcher: Fetcher): Promi
 
 /**
  * Verifies every URL (at most 8 at a time) and returns the failures in input order. A URL passes when
- * every hop is a 301 and it ends on a 200 on its expected origin, within 5 redirects.
+ * every hop is a 301 on one of the two origins and it ends on a 200 on its expected origin, within 5
+ * redirects; a `DIRECT_URLS` entry must be a 200 with no redirect. Throws on an empty list.
  */
 export async function verifyUrls(urls: string[], origins: Origins, fetcher: Fetcher): Promise<Failure[]> {
+  // An empty list would "pass" while checking nothing.
+  if (urls.length === 0) throw new RangeError('no URLs to check');
   const results: (Failure | undefined)[] = new Array(urls.length);
   let next = 0;
   const worker = async () => {

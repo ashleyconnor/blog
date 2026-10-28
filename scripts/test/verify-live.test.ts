@@ -3,6 +3,7 @@ import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
+import { DIRECT_URLS } from '../lib/legacy-urls.ts';
 import { type Fetcher, verifyUrls } from '../lib/verify-live.ts';
 
 const PROD_BLOG = 'https://www.ashleyconnor.co.uk';
@@ -115,6 +116,39 @@ describe('verifyUrls', () => {
       [`${origins.blog}/b/`]: { status: 200 },
     });
     expect(await verifyUrls([`${PROD_BLOG}/a`], origins, fetcher)).toEqual([]);
+  });
+
+  it('fails a direct-only URL that redirects, even with a 301 to a 200', async () => {
+    const fetcher = fake({
+      [`${origins.blog}/instaboxd/privacy/`]: { status: 301, location: '/elsewhere/' },
+      [`${origins.blog}/elsewhere/`]: { status: 200 },
+    });
+    const [failure] = await verifyUrls([`${PROD_BLOG}/instaboxd/privacy/`], origins, fetcher);
+    expect(failure!.reason).toMatch(/directly/);
+  });
+
+  it('passes a direct-only URL served with a 200 and no redirect', async () => {
+    const fetcher = fake({ [`${origins.blog}/instaboxd/privacy/`]: { status: 200 } });
+    expect(await verifyUrls([`${PROD_BLOG}/instaboxd/privacy/`], origins, fetcher)).toEqual([]);
+  });
+
+  it('lists /instaboxd/privacy/ as a direct-only URL', () => {
+    expect(DIRECT_URLS.has(`${PROD_BLOG}/instaboxd/privacy/`)).toBe(true);
+  });
+
+  it('fails a hop to a third-party host, even when it bounces back', async () => {
+    const fetcher = fake({
+      [`${origins.blog}/a`]: { status: 301, location: 'https://elsewhere.example/a' },
+      ['https://elsewhere.example/a']: { status: 301, location: `${PROD_BLOG}/a/` },
+      [`${origins.blog}/a/`]: { status: 200 },
+    });
+    const [failure] = await verifyUrls([`${PROD_BLOG}/a`], origins, fetcher);
+    expect(failure!.reason).toContain('https://elsewhere.example');
+    expect(fetcher.requested).not.toContain('https://elsewhere.example/a');
+  });
+
+  it('rejects an empty URL list', async () => {
+    await expect(verifyUrls([], origins, fake({}))).rejects.toThrow('no URLs to check');
   });
 
   it('reports a request error as a failure instead of throwing', async () => {

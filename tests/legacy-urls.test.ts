@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import sharp from 'sharp';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { BLOG_ORIGIN, LEGACY_IMAGES, legacySitemapUrls, legacyUrls } from '../scripts/lib/legacy-urls.ts';
+import { BLOG_ORIGIN, DIRECT_URLS, LEGACY_IMAGES, legacySitemapUrls, legacyUrls } from '../scripts/lib/legacy-urls.ts';
 
 const root = join(import.meta.dirname, '..');
 
@@ -164,8 +164,8 @@ describe('legacy URLs', () => {
     expect(landing('/assets/images/global/og_banner.png')).toBe('blog /assets/images/global/og_banner.png');
   });
 
-  it('/instaboxd/privacy/ is a built page, not a redirect', () => {
-    const { app, file, hops } = land(`${ORIGINS.blog}/instaboxd/privacy/`);
+  it.each([...DIRECT_URLS])('%s is a built page, not a redirect', (url) => {
+    const { app, file, hops } = land(url);
     expect(hops).toEqual([]);
     expect(app).toBe('blog');
     expect(isFile(file)).toBe(true);

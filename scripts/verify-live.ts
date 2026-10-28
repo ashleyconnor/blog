@@ -2,7 +2,8 @@
  * Checks every legacy URL against live origins: `pnpm verify:live [--blog <origin>] [--til <origin>]`.
  * The defaults are the production origins; pass the `workers.dev` origins to check before cutover.
  * Prints one `FAIL` line per failing URL and exits 1 when there are any, 0 when all pass, and 2 on
- * bad arguments. See `lib/verify-live.ts`.
+ * bad arguments or an empty URL list. It checks status codes and end hosts, not destination paths;
+ * see `lib/verify-live.ts`.
  */
 import { parseArgs } from 'node:util';
 import { BLOG_ORIGIN, legacyUrls } from './lib/legacy-urls.ts';
@@ -32,6 +33,10 @@ const fetcher: Fetcher = async (url) => {
 };
 
 const urls = legacyUrls();
+if (urls.length === 0) {
+  console.error('no URLs to check');
+  process.exit(2);
+}
 console.log(`Checking ${urls.length} legacy URLs against ${origins.blog} and ${origins.til}`);
 const failures = await verifyUrls(urls, origins, fetcher);
 for (const { url, chain, reason } of failures) console.log(`FAIL ${url}: ${reason} (${chain.join(' → ')})`);

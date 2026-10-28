@@ -8,7 +8,7 @@ import { type ChildProcess, spawn } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { BLOG_ORIGIN, legacyUrls } from '../scripts/lib/legacy-urls.ts';
+import { BLOG_ORIGIN, DIRECT_URLS, legacyUrls } from '../scripts/lib/legacy-urls.ts';
 import { freePort, host } from '../scripts/lib/preview.ts';
 
 const root = join(import.meta.dirname, '..');
@@ -162,8 +162,8 @@ describe('Workers (production build)', () => {
     }
   });
 
-  it('serves /instaboxd/privacy/ directly', async () => {
-    const { hops, response } = await follow(`${BLOG_ORIGIN}/instaboxd/privacy/`);
+  it.each([...DIRECT_URLS])('serves %s directly', async (url) => {
+    const { hops, response } = await follow(url);
     await response.body?.cancel();
     expect(hops).toEqual([]);
     expect(response.status).toBe(200);
