@@ -161,7 +161,7 @@ describe('layout', () => {
     expect(readFileSync(join(dist, 'favicon.svg'), 'utf8')).toMatch(/^<svg\b/);
   });
 
-  it('preloads only the fonts of the first paint: Space Grotesk, and Inter 400 and 500', () => {
+  it('preloads only the two faces most of the first paint uses: Inter 400 and Space Grotesk 700', () => {
     const html = page(dist, BASIC);
     // Each family's @font-face rules are inlined in <head>: map their files to "<family> <weight>".
     const faces = new Map(
@@ -171,7 +171,7 @@ describe('layout', () => {
     );
     expect(faces.size).toBe(7);
     const preloaded = [...html.matchAll(/<link rel="preload" href="([^"]+)" as="font"/g)].map(([, url]) => faces.get(url!));
-    expect(preloaded.sort()).toEqual(['Inter 400', 'Inter 500', 'Space Grotesk 500', 'Space Grotesk 700']);
+    expect(preloaded.sort()).toEqual(['Inter 400', 'Space Grotesk 700']);
   });
 
   it('has site navigation, a centred reading column and the licence footer', () => {

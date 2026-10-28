@@ -357,12 +357,7 @@ describe('lighthouserc.cjs', () => {
     expect(ci.collect).not.toHaveProperty('startServerCommand');
     expect(ci.collect).not.toHaveProperty('startServerReadyPattern');
     expect(ci.collect.numberOfRuns).toBe(3);
-    // Same gate, except that mobile performance on the previews accepts 0.99 (owner's call).
-    const { 'categories:performance': performance, ...rest } = ci.assert.assertions;
-    const { 'categories:performance': localPerformance, ...localRest } = local.assert.assertions;
-    expect(rest).toEqual(localRest);
-    expect(localPerformance).toEqual(['error', { minScore: 1 }]);
-    expect(performance).toEqual(['error', { minScore: preset === 'mobile' ? 0.99 : 1 }]);
+    expect(ci.assert).toEqual(local.assert);
     expect(ci.assert.aggregationMethod).toBe('optimistic');
     expect(ci.upload).toEqual(local.upload);
     // Same preset; previews send `X-Robots-Tag: noindex` on purpose, so the crawlability audit is skipped.
