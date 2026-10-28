@@ -57,3 +57,86 @@ describe('README', () => {
     );
   });
 });
+
+describe('README Deploying section', () => {
+  const deploying = () => readme().match(/^## Deploying\n([\s\S]*?)(?=^## |$(?![\s\S]))/m)?.[1] ?? '';
+
+  it('exists and covers secrets, previews, verify:live and the runbook', () => {
+    const text = deploying();
+    for (const needle of [
+      'CLOUDFLARE_API_TOKEN',
+      'CLOUDFLARE_ACCOUNT_ID',
+      'Account API token',
+      'Workers',
+      'Admin',
+      'gh secret set CLOUDFLARE_API_TOKEN',
+      'gh secret set CLOUDFLARE_ACCOUNT_ID --body',
+      '<!-- site-previews -->',
+      'pnpm verify:live',
+      'docs/cutover.md',
+    ]) {
+      expect(text).toContain(needle);
+    }
+  });
+
+  it('no longer calls PR previews planned', () => {
+    expect(readme()).not.toMatch(/previews[^.]*planned/i);
+  });
+});
+
+describe('docs/cutover.md', () => {
+  const runbook = () => readFileSync(join(root, 'docs/cutover.md'), 'utf8');
+
+  it('exists', () => {
+    expect(existsSync(join(root, 'docs/cutover.md'))).toBe(true);
+  });
+
+  it('lists the cutover steps in order, deleting DNS records before the cutover deploy', () => {
+    const text = runbook();
+    const steps = [
+      'pnpm verify:live --blog https://blog.',
+      '"custom_domain": true',
+      'Workers Routes',
+      'remove the custom domains from the Pages project',
+      'delete the `www` CNAME',
+      'Merge the cutover PR',
+      'apex',
+      'pnpm verify:live`',
+      'Delete the Pages project',
+      'AWS_ACCESS_KEY_ID',
+      'Rollback',
+    ];
+    let last = -1;
+    for (const step of steps) {
+      const at = text.indexOf(step, last + 1);
+      expect(at, `"${step}" should appear after the previous step`).toBeGreaterThan(last);
+      last = at;
+    }
+  });
+
+  it('marks who does each step', () => {
+    const text = runbook();
+    expect(text).toContain('**Claude (in a PR)**');
+    expect(text).toContain('**Ashley (dashboard/merge)**');
+  });
+
+  it('covers the known behaviours and the Jekyll files to delete', () => {
+    const text = runbook();
+    for (const needle of [
+      '307',
+      '/404.html',
+      'X-Robots-Tag: noindex',
+      'AWS_SECRET_ACCESS_KEY',
+      '_posts/',
+      'jekyll-til/',
+      'Gemfile',
+      '_config.yml',
+      '.ruby-version',
+      'instaboxd/',
+      'robots.txt',
+      'outage',
+    ]) {
+      expect(text).toContain(needle);
+    }
+  });
+});
