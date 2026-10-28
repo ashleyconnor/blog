@@ -24,11 +24,9 @@ interface Entry<Data extends FrontMatter = FrontMatter> {
   data: Data;
   body?: string;
   filePath?: string;
-  /** Astro's rendered HTML: Markdown entries have it, MDX entries do not. */
-  rendered?: { html: string };
 }
 
-function common({ id, data, rendered }: Entry) {
+function common({ id, data }: Entry) {
   return {
     id,
     title: data.title,
@@ -38,7 +36,6 @@ function common({ id, data, rendered }: Entry) {
     draft: data.draft,
     unlisted: data.unlisted,
     legacyUrls: data.legacyUrls,
-    html: rendered?.html,
   };
 }
 

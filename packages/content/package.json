@@ -7,7 +7,8 @@
     ".": "./src/index.ts",
     "./collections": "./src/collections.ts",
     "./load-items": "./src/load-items.ts",
-    "./sitemap": "./src/sitemap.ts"
+    "./sitemap": "./src/sitemap.ts",
+    "./entry-html": "./src/entry-html.ts"
   },
   "scripts": {
     "check": "tsc --noEmit"
