@@ -22,7 +22,7 @@ const { tag, items } = Astro.props;
 const count = `${items.length} ${items.length === 1 ? 'entry' : 'entries'}`;
 ---
 
-<BaseLayout
+<BaseLayout firstPaint="stream"
   title={`${tag.name} · Ashley Connor`}
   description={`Posts, TILs and photos tagged ${tag.name}.`}
   canonical={new URL(`/tags/${tag.slug}/`, Astro.site)}

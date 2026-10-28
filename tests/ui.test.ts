@@ -161,8 +161,8 @@ describe('layout', () => {
     expect(readFileSync(join(dist, 'favicon.svg'), 'utf8')).toMatch(/^<svg\b/);
   });
 
-  it('preloads only the fonts of the first paint: Space Grotesk, and Inter 400 and 500', () => {
-    const html = page(dist, BASIC);
+  /** "<family> <weight>" of each font file a page preloads. */
+  function preloadedFaces(html: string) {
     // Each family's @font-face rules are inlined in <head>: map their files to "<family> <weight>".
     const faces = new Map(
       [...html.matchAll(/@font-face\{font-family:"?([A-Za-z ]+?)-[0-9a-f]+"?;src:url\("([^"]+)"\)[^}]*?font-weight:(\d+)/g)].map(
@@ -170,8 +170,17 @@ describe('layout', () => {
       ),
     );
     expect(faces.size).toBe(7);
-    const preloaded = [...html.matchAll(/<link rel="preload" href="([^"]+)" as="font"/g)].map(([, url]) => faces.get(url!));
-    expect(preloaded.sort()).toEqual(['Inter 400', 'Inter 500', 'Space Grotesk 500', 'Space Grotesk 700']);
+    return [...html.matchAll(/<link rel="preload" href="([^"]+)" as="font"/g)].map(([, url]) => faces.get(url!)).sort();
+  }
+
+  it('preloads only the two faces an article opens with: Inter 400 and Space Grotesk 700', () => {
+    expect(preloadedFaces(page(dist, BASIC))).toEqual(['Inter 400', 'Space Grotesk 700']);
+  });
+
+  it('preloads the stream row title weight on stream pages: Inter 400 and Space Grotesk 500', () => {
+    for (const path of ['', 'posts', 'tags/python']) {
+      expect(preloadedFaces(page(dist, path)), path || '/').toEqual(['Inter 400', 'Space Grotesk 500']);
+    }
   });
 
   it('has site navigation, a centred reading column and the licence footer', () => {
