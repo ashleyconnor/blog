@@ -23,6 +23,7 @@ jobs:
   checks:
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
@@ -43,6 +44,7 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository
     needs: checks
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
       pull-requests: write
@@ -117,6 +119,17 @@ jobs:
           else
             gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -f body="$body" > /dev/null
           fi
+      # A fresh preview can take a few seconds to answer; Lighthouse would score an error page.
+      - name: Wait for the previews
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          BLOG_URL: ${{ steps.upload.outputs.blog }}
+          TIL_URL: ${{ steps.upload.outputs.til }}
+        run: |
+          for url in "$BLOG_URL" "$TIL_URL"; do
+            curl -fsS --retry 10 --retry-delay 3 --retry-all-errors -o /dev/null "$url"
+            echo "$url answers"
+          done
       # Every page must score 100 in each category, on desktop and on mobile.
       - name: Lighthouse
         if: steps.secrets.outputs.ready == 'true'
@@ -138,6 +151,7 @@ jobs:
       github.event_name == 'pull_request' && github.event.action == 'closed' &&
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       pull-requests: write
@@ -154,12 +168,13 @@ jobs:
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
-      # The default, `refs/pull/<n>/merge`, can be gone once the PR is merged or closed. This only
-      # needs the apps' wrangler configs, which the base commit has.
+      # The default, `refs/pull/<n>/merge`, can be gone once the PR is merged or closed. The head
+      # commit stays fetchable through `refs/pull/<n>/head`, and it is the commit that uploaded the
+      # previews, so it has wrangler and the apps' configs. A stacked PR's base may have neither.
       - if: steps.secrets.outputs.ready == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          ref: ${{ github.event.pull_request.head.sha }}
       - if: steps.secrets.outputs.ready == 'true'
         uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
       - if: steps.secrets.outputs.ready == 'true'
@@ -176,10 +191,15 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           PR: ${{ github.event.pull_request.number }}
         run: |
+          # Only a missing preview or Worker counts as done. wrangler 4.149.0 prints the API error:
+          # code 10025 is a missing preview, 10007 (or 10090) a missing Worker. A bare "not found"
+          # would also match pnpm's `Command "wrangler" not found`, so it must name a preview or
+          # Worker on the same line.
+          missing='\[code: (10025|10007|10090)\]|does not exist|(preview|worker).*not found|not found.*(preview|worker)|(status|http)[ :]*404([^0-9]|$)'
           for app in blog til; do
             if out=$(cd "apps/$app" && pnpm exec wrangler preview delete --name "pr-$PR" --skip-confirmation 2>&1); then
               printf '%s\n' "$out"
-            elif printf '%s\n' "$out" | grep -qiE 'not found|does not exist|10007|404'; then
+            elif printf '%s\n' "$out" | grep -qiE "$missing"; then
               # No such preview or Worker (never uploaded: the secrets came later, or the build
               # failed), so there is nothing to remove.
               printf '%s\n' "$out"
@@ -208,6 +228,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: checks
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Check Cloudflare secrets
         id: secrets

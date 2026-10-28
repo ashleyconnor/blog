@@ -7,6 +7,7 @@ import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, wr
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { unstable_readConfig } from 'wrangler';
 import { parse } from 'yaml';
 
 const root = join(import.meta.dirname, '..');
@@ -23,6 +24,7 @@ interface Step {
 }
 interface Job {
   if?: string;
+  'timeout-minutes'?: number;
   needs?: string | string[];
   permissions?: Record<string, string>;
   steps: Step[];
@@ -70,6 +72,11 @@ describe('site workflow', () => {
 
   it('has the four jobs', () => {
     expect(Object.keys(workflow().jobs).sort()).toEqual(['checks', 'cleanup', 'deploy', 'preview']);
+  });
+
+  it('bounds every job with a timeout', () => {
+    const timeouts = Object.fromEntries(Object.entries(workflow().jobs).map(([name, j]) => [name, j['timeout-minutes']]));
+    expect(timeouts).toEqual({ checks: 30, preview: 45, deploy: 30, cleanup: 10 });
   });
 
   it('checks on every event but a PR closing: install, browser, test, check, build', () => {
@@ -183,12 +190,28 @@ describe('site workflow', () => {
     expect(at).toBeGreaterThan(steps.findIndex((s) => s.run?.includes('<!-- site-previews -->')));
   });
 
-  it('deletes both previews on close, counting "not found" as success and failing on anything else', () => {
+  it('waits for both preview URLs to answer 200 before Lighthouse', () => {
+    const { steps } = job('preview');
+    const at = steps.findIndex((s) => s.run?.includes('curl '));
+    const wait = steps[at];
+    expect(wait?.if).toContain("steps.secrets.outputs.ready == 'true'");
+    expect(wait?.env).toEqual({
+      BLOG_URL: '${{ steps.upload.outputs.blog }}',
+      TIL_URL: '${{ steps.upload.outputs.til }}',
+    });
+    expect(wait?.run).toContain('for url in "$BLOG_URL" "$TIL_URL"');
+    expect(wait?.run).toContain('curl -fsS --retry 10 --retry-delay 3 --retry-all-errors -o /dev/null "$url"');
+    expect(at).toBeGreaterThan(steps.findIndex((s) => s.id === 'upload'));
+    expect(at).toBeLessThan(steps.findIndex((s) => s.run?.trim() === 'pnpm lighthouse'));
+  });
+
+  it('deletes both previews on close, counting a missing preview as success and failing on anything else', () => {
     const del = job('cleanup').steps.find((s) => s.run?.includes('wrangler preview delete'));
     const run = del?.run ?? '';
     expect(run).toContain('for app in blog til');
     expect(run).toContain('pnpm exec wrangler preview delete --name "pr-$PR" --skip-confirmation');
-    expect(run).toContain("grep -qiE 'not found|does not exist|10007|404'");
+    // A bare "not found" would also swallow pnpm's `Command "wrangler" not found`.
+    expect(run).not.toMatch(/grep[^\n]*'not found\|/);
     expect(run).toContain('exit 1');
   });
 
@@ -226,6 +249,12 @@ describe('site workflow', () => {
     });
 
     it.each([
+      // What wrangler 4.149.0's `preview delete` prints for a missing preview: the API error, whose
+      // code is PREVIEW_NOT_FOUND_ERR_CODE (10025); the API's own wording isn't in wrangler.
+      'A request to the Cloudflare API (/accounts/abc/workers/workers/blog/previews/pr-7) failed.\n\n  Preview not found. [code: 10025]',
+      'A request to the Cloudflare API (/accounts/abc/workers/workers/blog/previews/pr-7) failed.\n\n  Some other wording [code: 10025]',
+      // A missing Worker: WORKER_NOT_FOUND_ERR_CODE (10007).
+      'A request to the Cloudflare API (/accounts/abc/workers/workers/blog/previews/pr-7) failed.\n\n  This Worker does not exist on your account. [code: 10007]',
       'A request to the Cloudflare API failed. Preview not found [code: 10404]',
       'This Worker does not exist on your account. [code: 10007]',
       'workers.api.error.script_not_found [code: 10007]',
@@ -237,15 +266,21 @@ describe('site workflow', () => {
 
     it.each([
       'Authentication error [code: 10000]',
+      'A request to the Cloudflare API (/accounts/abc/workers/workers/blog/previews/pr-7) failed.\n\n  Authentication error [code: 10000]',
       'A request to the Cloudflare API failed with status 500',
+      // pnpm 12's output when the checkout has no wrangler: the job must fail, not leak the previews.
+      'Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL\n\n  × Command "wrangler" not found',
+      'Command "wrangler" not found',
+      'sh: wrangler: command not found',
+      'ERR_PNPM_OUTDATED_LOCKFILE  Cannot install with "frozen-lockfile" because pnpm-lock.yaml is not up to date',
     ])('fails on any other error: %s', (message) => {
       expect(runDelete(message, 1)).toBe(1);
     });
   });
 
-  it('checks out a commit that still exists after the PR is merged or closed', () => {
+  it("checks out the PR's head commit, which has wrangler even when a stacked PR's base does not", () => {
     const checkout = job('cleanup').steps.find((s) => s.uses?.startsWith('actions/checkout@'));
-    expect(checkout?.with?.ref).toBe('${{ github.event.pull_request.base.sha }}');
+    expect(checkout?.with?.ref).toBe('${{ github.event.pull_request.head.sha }}');
   });
 
   it('marks the comment as removed on close, with or without the Cloudflare secrets', () => {
@@ -269,6 +304,15 @@ describe('site workflow', () => {
     const deploy = job('deploy').steps.find((s) => s.run?.includes('wrangler deploy'));
     expect(deploy?.run).toContain('for app in blog til');
     expect(deploy?.run).toContain('(cd "apps/$app" && pnpm exec wrangler deploy)');
+  });
+});
+
+describe.each(['blog', 'til'])('apps/%s/wrangler.jsonc', (app) => {
+  // wrangler 4.149.0's `wrangler preview` refuses a config without one ("missing a `previews` block").
+  it('has a previews block, so `wrangler preview` runs', () => {
+    const config = unstable_readConfig({ config: join(root, 'apps', app, 'wrangler.jsonc') });
+    expect(config.previews).toBeTypeOf('object');
+    expect(config.previews).not.toBeNull();
   });
 });
 
