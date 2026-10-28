@@ -7,7 +7,7 @@ import { publicStream } from '../../lib/stream';
 const posts = (await publicStream()).filter((item) => item.type === 'post');
 ---
 
-<BaseLayout title="Posts · Ashley Connor" canonical={new URL('/posts/', Astro.site)}>
+<BaseLayout firstPaint="stream" title="Posts · Ashley Connor" canonical={new URL('/posts/', Astro.site)}>
   <PageHeader title="Posts" />
   <StreamList items={posts} />
 </BaseLayout>

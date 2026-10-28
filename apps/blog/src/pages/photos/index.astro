@@ -7,7 +7,7 @@ import { publicStream } from '../../lib/stream';
 const galleries = (await publicStream()).filter((item) => item.type === 'photos');
 ---
 
-<BaseLayout title="Photos · Ashley Connor" canonical={new URL('/photos/', Astro.site)}>
+<BaseLayout firstPaint="stream" title="Photos · Ashley Connor" canonical={new URL('/photos/', Astro.site)}>
   <PageHeader title="Photos" />
   {galleries.length > 0 ? <StreamList items={galleries} /> : <p class="mt-6 text-muted">No photo galleries yet.</p>}
 </BaseLayout>
