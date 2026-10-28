@@ -135,7 +135,7 @@ The cutover is done. What differed from the checklist:
   `ashleyconnor.co.uk → 192.0.2.1` was added. It never reaches an origin: the redirect answers first.
 - `pnpm verify:live` passed 46/46 against the real domains after the deploy.
 - The dead `AWS_*` repo secrets are deleted.
-- **Still open:** Cloudflare refused to delete the Pages project because it "has too many deployments
-  to be deleted". Its guide (https://cfl.re/3CXesIn) deletes the old deployments through the API
-  first, which needs a token with Pages Edit. Until then the project only serves
-  `blog-fo6w.pages.dev`; it has no custom domains.
+- **Deleting the Pages project.** The dashboard refused ("too many deployments to be deleted"). The
+  fix needed no new token: after a fresh `wrangler login`, every deployment except the canonical one
+  was deleted with `wrangler pages deployment delete <id> --project-name blog --force`, then
+  `wrangler pages project delete blog` removed the project. `verify:live` still passed 46/46 after.
