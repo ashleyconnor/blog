@@ -51,7 +51,7 @@ Do the steps in order.
      removes the README's "Old Jekyll workflow" section.
    - It fixes the `/404` follow-up (see "Known behaviours" below). It adds `X-Robots-Tag: noindex`
      for `/404` in the header rules (`packages/content/src/headers.ts`), and it points the 404
-     page's canonical at `/404/`.
+     page's canonical at `/404`, where Workers serves it.
 
 3. **Ashley (dashboard/merge)**: Edit the `github-actions-blog-workers` token. Add
    **Zone → Workers Routes → Edit** for the `ashleyconnor.co.uk` zone, so `wrangler deploy` can
@@ -108,7 +108,7 @@ These are expected. They are not failures:
   the legacy URLs.
 - `/404.html` redirects (307) to `/404`, which serves the 404 page with status 200. That page is
   noindex, and `/404.html` is not a legacy URL. The cutover PR's follow-up (step 2) adds
-  `X-Robots-Tag: noindex` for `/404` and points the 404 canonical at `/404/`.
+  `X-Robots-Tag: noindex` for `/404` and points the 404 canonical at `/404`.
 
 ## Rollback
 

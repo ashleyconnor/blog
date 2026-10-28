@@ -2,10 +2,10 @@
 //
 //   node --experimental-strip-types scripts/migrate-jekyll.ts
 //
-// Reads `_posts/`, `_til/` and `instaboxd/` (never modified: Jekyll still deploys from them), writes
-// `content/posts`, `content/til`, `content/pages` and the images they use under
-// `content/posts/_images`, and prints a warning for everything it could not convert cleanly.
-// Safe to re-run: it overwrites its own output.
+// Reads `_posts/`, `_til/` and `instaboxd/`, writes `content/posts`, `content/til`, `content/pages`
+// and the images they use under `content/posts/_images`, and prints a warning for everything it could
+// not convert cleanly. The Jekyll sources were deleted at the cutover: to re-run it, check out a commit
+// from before the cutover. Re-running overwrites `content/`, including any edits made since.
 import {
   copyFileSync,
   existsSync,

@@ -2,7 +2,8 @@
  * Copies Jekyll's `assets/images/` to `apps/blog/public/assets/images/`, keeping every path (spaces
  * included), so the old image URLs keep working after the cutover: `global/og_banner.png` was every
  * page's `og:image`, and posts and TILs embedded the screenshots. The migrated content imports its
- * own optimised copies; these only serve the old URLs.
+ * own optimised copies; these only serve the old URLs. Jekyll's `assets/images/` was deleted at the
+ * cutover, so re-running this needs a checkout from before it.
  *
  * Raster images are re-encoded by sharp, which writes no metadata unless asked to (no EXIF, GPS, XMP,
  * IPTC or ICC profile; colours are converted to sRGB). EXIF orientation is applied first, so a rotated

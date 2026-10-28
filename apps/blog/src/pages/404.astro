@@ -5,7 +5,7 @@ import PageHeader from '../components/PageHeader.astro';
 const link = 'text-post underline underline-offset-4 hover:text-head';
 ---
 
-<BaseLayout title="Page not found · Ashley Connor" canonical={new URL('/404.html', Astro.site)} noindex>
+<BaseLayout title="Page not found · Ashley Connor" canonical={new URL('/404', Astro.site)} noindex>
   <PageHeader title="Page not found" />
   <p class="mt-4 text-text">There is nothing at this address. It may have moved when the site was rebuilt.</p>
   <p class="mt-4 text-text">
