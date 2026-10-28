@@ -328,6 +328,8 @@ describe('other pages', () => {
     const html = file(dist, '404.html');
     expect(html).toMatch(/<h1[^>]*>[\s\S]*?not found[\s\S]*?<\/h1>/i);
     expect(html).toContain('<meta name="robots" content="noindex">');
+    // Workers serves `404.html` at `/404` (`/404.html` and `/404/` redirect there).
+    expect(html).toContain('<link rel="canonical" href="https://www.ashleyconnor.co.uk/404">');
     expect(html).toMatch(/<a[^>]*href="\/"/);
     // Words and links stay separated (Astro drops some whitespace at line breaks next to tags).
     expect(html.replace(/<[^>]+>/g, '')).toMatch(/all posts or\s+tags\./);

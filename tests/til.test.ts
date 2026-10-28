@@ -325,6 +325,8 @@ describe('404', () => {
     const html = readFileSync(join(dist, '404.html'), 'utf8');
     expect(html).toMatch(/<h1[^>]*>\s*Page not found\s*<\/h1>/);
     expect(html).toContain('<meta name="robots" content="noindex">');
+    // Workers serves `404.html` at `/404` (`/404.html` and `/404/` redirect there).
+    expect(html).toContain('<link rel="canonical" href="https://til.ashleyconnor.co.uk/404">');
     expect(html).toMatch(/<main[\s\S]*<a[^>]*href="\/"[^>]*>[\s\S]*?<\/main>/);
   });
 });

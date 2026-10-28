@@ -4,7 +4,7 @@ import TilNav from '../components/TilNav.astro';
 import { BLOG_ORIGIN, TIL_DESCRIPTION } from '../site';
 ---
 
-<BaseLayout title="Page not found" description={TIL_DESCRIPTION} canonical={new URL('/404/', Astro.site)} noindex>
+<BaseLayout title="Page not found" description={TIL_DESCRIPTION} canonical={new URL('/404', Astro.site)} noindex>
   <TilNav slot="nav" />
   <section class="py-16">
     <p class="font-mono text-xs tracking-wider text-til uppercase">404</p>

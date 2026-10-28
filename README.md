@@ -71,17 +71,12 @@ pnpm check                      # astro check for both sites
 pnpm build && pnpm lighthouse   # production build, then Lighthouse (desktop and mobile)
 ```
 
-### Old Jekyll workflow
-
-The Jekyll site (`_posts/`, `_til/`, `Makefile`) still exists until the cutover to Astro, and is
-being replaced by the workflow above. Until then, `make help` lists its commands (`make serve`,
-`make post <name>`, `make draft <name>`, `make til <name>`, `make publish <name>` and friends).
-
 ## Deploying
 
-Both sites are static-assets-only Cloudflare Workers (`apps/*/wrangler.jsonc`): `blog` and `til`.
-Until the cutover they deploy to `workers.dev` only. Pages (Jekyll) still serves
-www.ashleyconnor.co.uk. The cutover runbook is in [`docs/cutover.md`](docs/cutover.md).
+Both sites are static-assets-only Cloudflare Workers (`apps/*/wrangler.jsonc`): `blog` serves
+www.ashleyconnor.co.uk and `til` serves til.ashleyconnor.co.uk, both as Worker custom domains. They
+are also reachable on `workers.dev`. The cutover from Cloudflare Pages (Jekyll) is recorded in
+[`docs/cutover.md`](docs/cutover.md); the Jekyll site lives on in the git history.
 
 ### Secrets
 

@@ -12,6 +12,9 @@ const PRODUCTION = `/_astro/*
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
   X-Frame-Options: DENY
+
+/404
+  X-Robots-Tag: noindex
 `;
 
 /** Cloudflare's `_headers` format: an unindented path line, then that path's headers indented two spaces. */
@@ -35,10 +38,12 @@ function parse(text: string): Map<string, [string, string][]> {
 }
 
 describe('buildHeaders', () => {
-  it('production: caches hashed assets for a year, sets the security headers, never noindex', () => {
+  it('production: caches hashed assets for a year, sets the security headers, noindex only on /404', () => {
     const text = buildHeaders({ preview: false });
     expect(text).toBe(PRODUCTION);
-    expect(text).not.toContain('X-Robots-Tag');
+    const rules = parse(text);
+    expect(rules.get('/*')!.map(([name]) => name)).not.toContain('X-Robots-Tag');
+    expect(rules.get('/404')).toEqual([['X-Robots-Tag', 'noindex']]);
   });
 
   it('preview: every response is noindex', () => {
@@ -48,7 +53,7 @@ describe('buildHeaders', () => {
 
   it.each([false, true])('parses as Cloudflare _headers (preview: %s)', (preview) => {
     const rules = parse(buildHeaders({ preview }));
-    expect([...rules.keys()]).toEqual(['/_astro/*', '/*']);
+    expect([...rules.keys()]).toEqual(preview ? ['/_astro/*', '/*'] : ['/_astro/*', '/*', '/404']);
     expect(rules.get('/_astro/*')).toEqual([['Cache-Control', 'public, max-age=31536000, immutable']]);
     expect(rules.get('/*')).toEqual(
       expect.arrayContaining([
@@ -83,10 +88,14 @@ describe('isNoindexBuild', () => {
     expect(buildHeaders({ preview: isNoindexBuild() })).toContain('X-Robots-Tag: noindex');
   });
 
-  it('a production build (neither flag) never sends it', () => {
+  it('a production build (neither flag) never sends it for pages, only for the 404 page', () => {
     vi.stubEnv('PREVIEW', undefined);
     vi.stubEnv('PUBLIC_SHOW_DRAFTS', undefined);
-    expect(buildHeaders({ preview: isNoindexBuild() })).not.toContain('X-Robots-Tag');
+    const rules = parse(buildHeaders({ preview: isNoindexBuild() }));
+    expect(rules.get('/*')!.map(([name]) => name)).not.toContain('X-Robots-Tag');
+    expect([...rules.keys()].filter((path) => rules.get(path)!.some(([name]) => name === 'X-Robots-Tag'))).toEqual([
+      '/404',
+    ]);
   });
 
   it.each(['blog', 'til'])("%s's _headers endpoint uses it", (app) => {
