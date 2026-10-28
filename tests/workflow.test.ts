@@ -3,7 +3,8 @@
  * the Lighthouse config's remote mode, which the PR previews job uses to audit the deployed previews.
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
@@ -124,7 +125,9 @@ describe('site workflow', () => {
       expect(first?.run).toContain('[ -z "$TOKEN" ]');
       expect(first?.run).toContain('::notice');
       expect(first?.run).not.toMatch(/echo[^\n]*\$TOKEN/);
-      for (const step of rest) expect(step.if).toContain("steps.secrets.outputs.ready == 'true'");
+      // Editing the PR comment needs only `github.token`, so cleanup does it with or without the secrets.
+      const gated = rest.filter((s) => !(name === 'cleanup' && s.run?.includes('<!-- site-previews -->')));
+      for (const step of gated) expect(step.if).toContain("steps.secrets.outputs.ready == 'true'");
     });
 
     it('passes the Cloudflare credentials to wrangler and nowhere else', () => {
@@ -185,14 +188,81 @@ describe('site workflow', () => {
     const run = del?.run ?? '';
     expect(run).toContain('for app in blog til');
     expect(run).toContain('pnpm exec wrangler preview delete --name "pr-$PR" --skip-confirmation');
-    expect(run).toMatch(/grep -qi 'not found'/);
+    expect(run).toContain("grep -qiE 'not found|does not exist|10007|404'");
     expect(run).toContain('exit 1');
   });
 
-  it('marks the comment as removed on close', () => {
+  describe('deleting the previews, against a stub wrangler', () => {
+    /** Runs the cleanup delete script with a `pnpm` that prints `message` and exits `code`. */
+    function runDelete(message: string, code: number): number {
+      const run = job('cleanup').steps.find((s) => s.run?.includes('wrangler preview delete'))?.run;
+      if (!run) throw new Error('no delete step');
+      const dir = mkdtempSync(join(tmpdir(), 'cleanup-'));
+      try {
+        for (const sub of ['bin', 'apps/blog', 'apps/til']) mkdirSync(join(dir, sub), { recursive: true });
+        const pnpm = join(dir, 'bin/pnpm');
+        writeFileSync(pnpm, `#!/bin/sh\nprintf '%s\\n' "$STUB_MESSAGE" >&2\nexit "$STUB_CODE"\n`);
+        chmodSync(pnpm, 0o755);
+        const script = join(dir, 'run.sh');
+        writeFileSync(script, run);
+        try {
+          // Actions runs `bash -e -o pipefail` scripts.
+          execFileSync('bash', ['-e', '-o', 'pipefail', script], {
+            cwd: dir,
+            env: { PATH: `${join(dir, 'bin')}:${process.env.PATH}`, PR: '7', STUB_MESSAGE: message, STUB_CODE: String(code) },
+            stdio: 'ignore',
+          });
+          return 0;
+        } catch (error) {
+          return (error as { status: number }).status;
+        }
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    }
+
+    it('succeeds when the deletes succeed', () => {
+      expect(runDelete('Preview "pr-7" deleted successfully.', 0)).toBe(0);
+    });
+
+    it.each([
+      'A request to the Cloudflare API failed. Preview not found [code: 10404]',
+      'This Worker does not exist on your account. [code: 10007]',
+      'workers.api.error.script_not_found [code: 10007]',
+      'A request to the Cloudflare API (/accounts/x/workers/workers/blog/previews/pr-7) failed with status 404',
+      'PREVIEW NOT FOUND',
+    ])('counts a missing preview or Worker as success: %s', (message) => {
+      expect(runDelete(message, 1)).toBe(0);
+    });
+
+    it.each([
+      'Authentication error [code: 10000]',
+      'A request to the Cloudflare API failed with status 500',
+    ])('fails on any other error: %s', (message) => {
+      expect(runDelete(message, 1)).toBe(1);
+    });
+  });
+
+  it('checks out a commit that still exists after the PR is merged or closed', () => {
+    const checkout = job('cleanup').steps.find((s) => s.uses?.startsWith('actions/checkout@'));
+    expect(checkout?.with?.ref).toBe('${{ github.event.pull_request.base.sha }}');
+  });
+
+  it('marks the comment as removed on close, with or without the Cloudflare secrets', () => {
     const edit = job('cleanup').steps.find((s) => s.run?.includes('<!-- site-previews -->'));
     expect(edit?.run).toContain('-X PATCH');
     expect(edit?.run).toMatch(/removed/i);
+    expect(edit?.if).toBeUndefined();
+    expect(edit?.env).toEqual({ GH_TOKEN: '${{ github.token }}', PR: '${{ github.event.pull_request.number }}' });
+  });
+
+  it('keeps the Lighthouse reports, even when the gate fails', () => {
+    const { steps } = job('preview');
+    const at = steps.findIndex((s) => s.uses?.startsWith('actions/upload-artifact@'));
+    expect(at).toBeGreaterThan(steps.findIndex((s) => s.run?.trim() === 'pnpm lighthouse'));
+    expect(steps[at]?.if).toMatch(/^always\(\) && /);
+    // `.lighthouseci` is a dot directory, which upload-artifact leaves out by default.
+    expect(steps[at]?.with).toMatchObject({ path: '.lighthouseci/', 'include-hidden-files': true });
   });
 
   it('deploys each app with wrangler deploy', () => {

@@ -124,6 +124,14 @@ jobs:
           LHCI_BLOG_URL: ${{ steps.upload.outputs.blog }}
           LHCI_TIL_URL: ${{ steps.upload.outputs.til }}
         run: pnpm lighthouse
+      - name: Keep the Lighthouse reports
+        if: always() && steps.secrets.outputs.ready == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: lighthouse-pr-${{ github.event.pull_request.number }}
+          path: .lighthouseci/
+          include-hidden-files: true
+          if-no-files-found: ignore
 
   cleanup:
     if: >-
@@ -146,8 +154,12 @@ jobs:
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
+      # The default, `refs/pull/<n>/merge`, can be gone once the PR is merged or closed. This only
+      # needs the apps' wrangler configs, which the base commit has.
       - if: steps.secrets.outputs.ready == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
       - if: steps.secrets.outputs.ready == 'true'
         uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
       - if: steps.secrets.outputs.ready == 'true'
@@ -167,8 +179,9 @@ jobs:
           for app in blog til; do
             if out=$(cd "apps/$app" && pnpm exec wrangler preview delete --name "pr-$PR" --skip-confirmation 2>&1); then
               printf '%s\n' "$out"
-            elif printf '%s\n' "$out" | grep -qi 'not found'; then
-              # Never uploaded (the secrets came later, or the build failed): nothing to remove.
+            elif printf '%s\n' "$out" | grep -qiE 'not found|does not exist|10007|404'; then
+              # No such preview or Worker (never uploaded: the secrets came later, or the build
+              # failed), so there is nothing to remove.
               printf '%s\n' "$out"
               echo "::notice::$app has no preview pr-$PR; nothing to delete."
             else
@@ -176,8 +189,8 @@ jobs:
               exit 1
             fi
           done
+      # Needs only `github.token`, so it runs with or without the Cloudflare secrets.
       - name: Mark the comment removed
-        if: steps.secrets.outputs.ready == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
