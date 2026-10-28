@@ -14,7 +14,8 @@
     "preview:blog": "wrangler dev --local --config apps/blog/wrangler.jsonc --port 8787",
     "preview:til": "wrangler dev --local --config apps/til/wrangler.jsonc --port 8788",
     "new": "node --experimental-strip-types scripts/new.ts",
-    "review:check": "node --experimental-strip-types scripts/review-checks.ts"
+    "review:check": "node --experimental-strip-types scripts/review-checks.ts",
+    "verify:live": "node --experimental-strip-types scripts/verify-live.ts"
   },
   "devDependencies": {
     "@ac/ui": "workspace:*",
