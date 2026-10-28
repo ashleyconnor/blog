@@ -22,7 +22,7 @@ Say which file you picked and why (argument given, or newest draft).
 ## 2. Run the deterministic checks
 
 Run `pnpm review:check <path>`. Exit code 0 means clean, 1 means findings, 2 means the file could
-not be read (stop and report the error). Include its output lines verbatim; each finding with
+not be read (stop and report the error). Include each `file:line [rule] message` line it prints verbatim (not the pnpm header or exit-code lines); each finding with
 rule `front-matter`, `heading-order`, `image-alt`, `todo` or `link` is Blocking.
 
 ## 3. Read the entry and review its structure

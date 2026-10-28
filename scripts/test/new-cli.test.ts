@@ -2,7 +2,7 @@
 // the fixture content. The copy lives in the gitignored `scripts/.tmp/`.
 import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { photosSchema, postSchema, tilSchema } from '@ac/content';
 import { parse } from 'yaml';
@@ -29,10 +29,14 @@ afterEach(() => {
 });
 
 function run(...args: string[]) {
+  return runWith({}, ...args);
+}
+
+function runWith(env: Record<string, string>, ...args: string[]) {
   const result = spawnSync(
     process.execPath,
     ['--experimental-strip-types', '--no-warnings', 'scripts/new.ts', ...args, '--no-open'],
-    { cwd: REPO, env: { ...process.env, CONTENT_ROOT: root }, encoding: 'utf8', stdio: 'pipe' },
+    { cwd: REPO, env: { ...process.env, CONTENT_ROOT: root, ...env }, encoding: 'utf8', stdio: 'pipe' },
   );
   return { code: result.status, out: result.stdout, err: result.stderr };
 }
@@ -114,6 +118,19 @@ describe('pnpm new', () => {
     expect(data.draft).toBe(true);
     expect(data.images.map((image) => image.src)).toEqual(['./one.jpg', './two.JPG']);
     expect(out).toContain('http://localhost:4321/photos/desert/');
+  });
+
+  it('resolves a relative --images folder from where pnpm was run, not the repository root', () => {
+    writeFileSync(join(sources, 'one.jpg'), 'one');
+    // pnpm runs scripts from the repository root and records the caller's directory in INIT_CWD.
+    const { code, out, err } = runWith(
+      { npm_lifecycle_event: 'new', INIT_CWD: dirname(sources) },
+      '--type', 'photos', '--title', 'Relative', '--tags', 'travel', '--images', basename(sources),
+    );
+    expect(err).toBe('');
+    expect(code).toBe(0);
+    expect(created(out)).toBe(join(root, 'photos', 'relative', 'index.md'));
+    expect(readFileSync(join(root, 'photos', 'relative', 'one.jpg'), 'utf8')).toBe('one');
   });
 
   it('refuses an unknown tag and writes nothing', () => {

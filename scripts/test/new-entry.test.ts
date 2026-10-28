@@ -221,6 +221,21 @@ describe('writeEntry', () => {
     );
   });
 
+  it('keeps the title out of MDX prose, where < and { would be parsed as JSX', () => {
+    const plan = planEntry({ ...opts('post', true), title: 'Option<T> and {} in Rust' });
+    writeEntry(plan, { dir: join(TEMPLATES, 'post-advanced') });
+    const body = readFileSync(plan.file, 'utf8').slice(plan.frontMatter.length);
+    expect(body).not.toContain('<T>');
+    expect(body).not.toContain('{}');
+  });
+
+  it('leaves no to-do markers in the commented-out MDX examples', () => {
+    const template = readFileSync(join(TEMPLATES, 'post-advanced', 'index.mdx'), 'utf8');
+    const comments = template.match(/\{\/\*[\s\S]*?\*\/\}/g) ?? [];
+    expect(comments.length).toBeGreaterThan(0);
+    for (const comment of comments) expect(comment).not.toMatch(/\b(TODO|FIXME|XXX)\b/);
+  });
+
   it('refuses a basic post when an advanced post has the same id', () => {
     writeEntry(planEntry(opts('post', true)), { dir: join(TEMPLATES, 'post-advanced') });
     const plan = planEntry(opts('post'));

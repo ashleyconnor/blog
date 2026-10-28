@@ -74,11 +74,16 @@ function imageFiles(dir: string): string[] {
     .sort();
 }
 
+// pnpm runs scripts from the repository root and records the caller's directory in INIT_CWD, so a
+// relative --images folder is resolved from there.
+const cwd = process.env.npm_lifecycle_event === 'new' ? (process.env.INIT_CWD ?? process.cwd()) : process.cwd();
+
 /** The images to copy from `dir`, refusing a folder without any. */
 function photoSources(dir: string): string[] {
-  const images = imageFiles(resolve(dir));
+  const folder = resolve(cwd, dir);
+  const images = imageFiles(folder);
   if (images.length === 0) {
-    throw new Error(`No image files in ${resolve(dir)} (looked for ${[...IMAGE_EXTENSIONS].join(', ')})`);
+    throw new Error(`No image files in ${folder} (looked for ${[...IMAGE_EXTENSIONS].join(', ')})`);
   }
   return images;
 }
@@ -154,6 +159,15 @@ async function main(argv: string[]): Promise<void> {
   const interactive = missing.length > 0;
   if (interactive) prompts.intro('New entry');
 
+  const title =
+    values.title ??
+    (await ask(
+      prompts.text({
+        message: 'Title',
+        validate: (value) => check(() => lib.slugify(value ?? '')),
+      }),
+    ));
+
   const type: EntryType =
     (values.type as EntryType | undefined) ??
     (await ask(
@@ -175,15 +189,6 @@ async function main(argv: string[]): Promise<void> {
       }),
     );
   }
-
-  const title =
-    values.title ??
-    (await ask(
-      prompts.text({
-        message: 'Title',
-        validate: (value) => check(() => lib.slugify(value ?? '')),
-      }),
-    ));
 
   // New tags are only collected here; they are appended to tags.yml after the last prompt.
   const newTags: { slug: string; name: string }[] = [];
