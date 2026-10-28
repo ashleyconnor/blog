@@ -102,6 +102,8 @@ describe('gallery page', () => {
     expect(attr(tags(html, 'ul').find((ul) => /\bdata-gallery\b/.test(ul))!, 'class')?.split(/\s+/)).toEqual(
       expect.arrayContaining(['breakout', 'grid']),
     );
+    // `not-prose`: inside a post's prose the typography plugin would add list bullets and padding.
+    expect(attr(tags(html, 'ul').find((ul) => /\bdata-gallery\b/.test(ul))!, 'class')?.split(/\s+/)).toContain('not-prose');
     const sources = tags(grid(html), 'source');
     expect(sources.filter((s) => attr(s, 'type') === 'image/avif')).toHaveLength(4);
     expect(sources.filter((s) => attr(s, 'type') === 'image/webp')).toHaveLength(4);

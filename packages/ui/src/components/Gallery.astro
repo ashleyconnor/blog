@@ -22,7 +22,7 @@ const images = await Promise.all(
 );
 ---
 
-<ul role="list" data-gallery class="breakout mt-8 grid grid-cols-2 gap-2 md:grid-cols-3">
+<ul role="list" data-gallery class="not-prose breakout mt-8 grid grid-cols-2 gap-2 md:grid-cols-3">
   {
     images.map(({ src, alt, caption, full }, i) => (
       <li>
