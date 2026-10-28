@@ -12,3 +12,6 @@ dist/
 # Temporary content copies made by tests
 .tmp/
 .astro-cache/
+
+# Wrangler state (wrangler dev)
+.wrangler/

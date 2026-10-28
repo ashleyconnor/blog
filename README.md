@@ -59,9 +59,9 @@ header of `scripts/new.ts` lists every flag.
 
 ### Publishing
 
-Remove `draft: true` from the front matter and open a pull request. Pull request previews that
-render drafts are planned for the next stage (Cloudflare); until then, preview drafts locally
-with `PUBLIC_SHOW_DRAFTS=true`.
+Remove `draft: true` from the front matter and open a pull request. The PR gets preview deploys
+of both sites with drafts shown (see [Deploying](#deploying)). To preview drafts locally, use
+`PUBLIC_SHOW_DRAFTS=true`.
 
 ### Checks
 
@@ -76,6 +76,68 @@ pnpm build && pnpm lighthouse   # production build, then Lighthouse (desktop and
 The Jekyll site (`_posts/`, `_til/`, `Makefile`) still exists until the cutover to Astro, and is
 being replaced by the workflow above. Until then, `make help` lists its commands (`make serve`,
 `make post <name>`, `make draft <name>`, `make til <name>`, `make publish <name>` and friends).
+
+## Deploying
+
+Both sites are static-assets-only Cloudflare Workers (`apps/*/wrangler.jsonc`): `blog` and `til`.
+Until the cutover they deploy to `workers.dev` only. Pages (Jekyll) still serves
+www.ashleyconnor.co.uk. The cutover runbook is in [`docs/cutover.md`](docs/cutover.md).
+
+### Secrets
+
+GitHub Actions needs two repo secrets. Without them, the Cloudflare jobs skip with a notice.
+
+- `CLOUDFLARE_API_TOKEN`: an **Account API token**. Create it under Manage account → Account API
+  tokens → Create Token. Cloudflare recommends it over a user token because it isn't tied to a
+  person. Use a custom token ("Start from scratch"), scoped to the account, with **Workers →
+  Admin**. Editor is not enough: Editor cannot create or delete Workers, and the first deploy
+  creates them. The current token is `github-actions-blog-workers`, with no expiration.
+- `CLOUDFLARE_ACCOUNT_ID`: the hex segment in the Cloudflare dashboard URL
+  (`dash.cloudflare.com/<account-id>/...`).
+
+```sh
+gh secret set CLOUDFLARE_API_TOKEN               # paste the token at the prompt
+gh secret set CLOUDFLARE_ACCOUNT_ID --body <id>
+```
+
+Never paste the token into a chat or commit it.
+
+The account's `workers.dev` subdomain must exist before the first `main` deploy, or the deploy has
+no `workers.dev` URL to publish to. Check it under Workers & Pages: the overview shows the
+subdomain. If the dashboard asks you to set one, set it once. This is not verified against a
+fresh account.
+
+### What runs when (`.github/workflows/site.yml`)
+
+- **Every PR and push**: checks (`pnpm test`, `pnpm check`, `pnpm build`).
+- **PR opened or updated** (PRs from this repo only): builds both sites with drafts shown and
+  `PREVIEW=true`, which sends `X-Robots-Tag: noindex`. It then uploads them with
+  `wrangler preview --name pr-<n>` and runs Lighthouse against the previews: 100 in every category,
+  except mobile performance, which accepts 0.99 on the previews for now. The Lighthouse reports are
+  uploaded as a workflow artifact.
+- **PR closed**: deletes both previews and edits the preview comment to say they were removed.
+- **Push to `main`**: deploys both Workers to `workers.dev`.
+
+### Reading the preview comment
+
+Each PR gets one comment, marked `<!-- site-previews -->`. It names the commit it was built from
+and links the Blog and TIL preview URLs. Every push updates the same comment, so the links are
+always for the latest commit. Previews show drafts and are noindex. For that reason the Lighthouse
+`is-crawlable` audit is skipped against them.
+
+The production-build Lighthouse run, which does enforce `is-crawlable`, is manual and not part of
+CI. Run it locally with `pnpm build && pnpm lighthouse`.
+
+### Checking a deploy
+
+`pnpm verify:live [--blog <origin>] [--til <origin>]` walks every legacy URL. Each hop must be a
+301 that stays on the two origins, and `/instaboxd/privacy/` must be a 200 with no redirect. It
+checks status codes and end hosts, not destination paths. The defaults are the production origins.
+Pass the `workers.dev` origins to check before the cutover. It exits 0 on a pass, 1 with
+failures, and 2 on bad input.
+
+To serve a built site locally under the Workers runtime, run `pnpm build`, then
+`pnpm preview:blog` or `pnpm preview:til`.
 
 ## License
 
