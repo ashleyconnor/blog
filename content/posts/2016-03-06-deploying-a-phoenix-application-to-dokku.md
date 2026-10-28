@@ -199,8 +199,6 @@ To dokku@mydomain.com:phoenix
 
 If we navigate to [http://phoenix.mydomain.com](http://phoenix.mydomain.com) we will see the sample application running.
 
-![Phoenix Chat Example Running](https://www.dropbox.com/s/ovetw1ozujfwgm2/Screenshot%202016-03-06%2011.59.16.png?dl=1)
-
 Pretty sweet.
 
 ## 6. Bonus - SSL Encryption
@@ -244,5 +242,3 @@ Now to add a certificate to your application we simply run:
 ```
 
 Now we can visit our site securely at [https://phoenix.mydomain.com](https://phoenix.mydomain.com) and see the valid SSL certificate in action:
-
-![SSL Certificate](https://www.dropbox.com/s/qx9d7h0sg3uziij/Screenshot%202016-03-06%2011.57.52.png?dl=1)
