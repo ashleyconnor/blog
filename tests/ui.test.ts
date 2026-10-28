@@ -221,6 +221,26 @@ describe('layout', () => {
   });
 });
 
+describe('prose sections', () => {
+  const rules = () => ruleBlocks(allCss(page(dist, BASIC)));
+  const ruleFor = (pattern: RegExp) => rules().find((r) => r.selectors.some((s) => pattern.test(s)));
+
+  it('marks each h2 section break with a hairline and extra space, except a heading that opens the text', () => {
+    const h2 = ruleFor(/h2\)?:not\([^)]*first-child/);
+    expect(h2, 'an h2 rule that skips the first child').toBeDefined();
+    expect(h2!.body).toMatch(/border-top:\s*1px solid var\(--color-line\)/);
+    expect(h2!.body).toMatch(/padding-top:\s*[\d.]+(rem|em)/);
+    expect(h2!.body).toMatch(/margin-top:\s*[\d.]+(rem|em)/);
+  });
+
+  it('keeps paragraphs closer together than the typography default (1.25em)', () => {
+    // Prose.astro's own rule (scoped, so it outranks the plugin's zero-specificity `:where(p)` default).
+    const p = ruleFor(/^\.prose\[data-astro-cid-[^\]]+\]\s+p$/);
+    expect(p, 'a paragraph spacing rule').toBeDefined();
+    expect(p!.body).toMatch(/margin-(top|bottom|block):\s*1em/);
+  });
+});
+
 describe('post page', () => {
   it('lives at the Los Angeles date, with pill, title and meta line', () => {
     // 2025-04-23 19:39 -07:00 is already the 24th in UTC.

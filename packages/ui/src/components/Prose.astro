@@ -29,6 +29,22 @@
     --tw-prose-td-borders: var(--color-line);
   }
 
+  /*
+   * Section breaks: in a long post a bare h2 barely stands out from the paragraphs around it, so each
+   * one gets a hairline and room above it. A heading that opens the text has nothing to separate.
+   */
+  .prose :global(h2:not(:first-child)) {
+    border-top: 1px solid var(--color-line);
+    padding-top: 2rem;
+    margin-top: 3rem;
+  }
+
+  /* Short paragraphs ("Well…") read as a run rather than as separate blocks with the default 1.25em. */
+  .prose :global(p) {
+    margin-top: 1em;
+    margin-bottom: 1em;
+  }
+
   /* Inline code only: fenced blocks are drawn by Expressive Code. */
   .prose :global(:not(pre) > code) {
     border: 1px solid var(--color-line);
