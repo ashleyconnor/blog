@@ -33,11 +33,11 @@ dokku logspout:stream
 
 Log into your Papertrail account and click on the "Add Systems" button
 
-![Papertrail Dashboard](https://www.dropbox.com/s/1y3oqixf8eu80s3/Screenshot%202016-10-23%2015.51.10.png?dl=1)
+![Papertrail Dashboard](./_images/papertrail/dashboard.png)
 
 After this we want to copy the URL that Papertrail gives us. This is where we ship our logs.
 
-![Papertrial Configuration URL](https://www.dropbox.com/s/0x4absa6mxcu0ae/Screenshot%202016-10-23%2015.52.00.png?dl=1)
+![Papertrial Configuration URL](./_images/papertrail/configuration-url.png)
 
 In my case the URL is logs4.papertrailapp.com:17665
 
@@ -66,7 +66,7 @@ dokku ps:rebuildall
 
 ## Conclusion
 
-![Papertrail dashboard](https://www.dropbox.com/s/3f3vvzl8v7xigvt/Screenshot%202016-10-23%2016.30.26.png?dl=1)
+![Papertrail dashboard](./_images/papertrail/logs.png)
 
 As you can see in the image above, Logspout -> Papertrail allows us to see logs from all our dokku containers in one place. We can also filter by application.
 
