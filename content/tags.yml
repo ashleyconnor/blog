@@ -22,3 +22,5 @@
   name: Career
 - slug: travel
   name: Travel
+- slug: foo
+  name: foo
