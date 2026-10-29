@@ -4,7 +4,6 @@ date: "2026-10-29T10:20:21-07:00"
 tags:
   - tools
   - synology
-draft: true
 ---
 
 `ssh-copy-id` isn't installed on DSM 7+ and is unavailable from the Synology Package Center (or the [SynoCommunity Package repo](https://synocommunity.com/)).
