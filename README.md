@@ -45,8 +45,11 @@ header of `scripts/new.ts` lists every flag.
 - **Templates**: each entry starts from a folder in `templates/` (`post/`, `post-advanced/`,
   `til/`, `photos/`). Edit those files to change what new entries start with. An advanced post is
   an MDX folder with `components/` and `data/` beside `index.mdx`.
-- **Tags**: `--tags` takes only tags already in `content/tags.yml`. To add a new tag, run
-  `pnpm new` without `--tags` and pick "+ Add a new tag"; it is appended to `content/tags.yml`.
+- **Tags**: any tag works. Front matter can say `tags: [python, Machine Learning]`; the tag pages
+  are built from every tag the entries use. A tag's slug is its lowercase kebab case
+  (`machine-learning`) and its name is the text as written. `content/tags.yml` is optional and only
+  holds overrides, for a different slug or display name (`{ slug: cpp, name: C++ }`,
+  `{ slug: macos, name: macOS }`); an override matches a tag by slug or by name.
 
 ### Reviewing
 
@@ -104,7 +107,8 @@ fresh account.
 
 ### What runs when (`.github/workflows/site.yml`)
 
-- **Every PR and push**: checks (`pnpm test`, `pnpm check`, `pnpm build`).
+- **Every PR and push**: checks (`pnpm test`, `pnpm check`, `pnpm build`). When only `content/`
+  changed, it just compiles both sites (`pnpm build:content`, plain `astro build`).
 - **PR opened or updated** (PRs from this repo only): builds both sites with drafts shown and
   `PREVIEW=true`, which sends `X-Robots-Tag: noindex`. It then uploads them with
   `wrangler preview --name pr-<n>` and runs Lighthouse against the previews: 100 in every category, except mobile performance, which

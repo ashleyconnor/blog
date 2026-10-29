@@ -1,16 +1,16 @@
 import { z } from 'astro/zod';
-import { loadTags } from './tags';
+import { resolveTag } from './tags';
 
-// Tags are checked against tags.yml at validation time (not import time), so
-// CONTENT_ROOT can point at a different tag list and edits are picked up.
-const tag = z.string().superRefine((slug, ctx) => {
-  const tags = loadTags();
-  if (!tags.has(slug)) {
-    ctx.addIssue({
-      code: 'custom',
-      message: `Unknown tag "${slug}". Known tags: ${[...tags.keys()].join(', ')}`,
-    });
+// Any tag is allowed; it becomes its slug (the default kebab case, or a tags.yml override).
+// Overrides are read at validation time (not import time), so CONTENT_ROOT can point at a
+// different tags.yml and edits are picked up.
+const tag = z.string().transform((value, ctx) => {
+  const { slug } = resolveTag(value);
+  if (!slug) {
+    ctx.addIssue({ code: 'custom', message: `Tag "${value}" needs at least one letter or digit` });
+    return z.NEVER;
   }
+  return slug;
 });
 
 // `z.coerce.date()` alone turns a blank `date:` (YAML null) into 1970-01-01, so only strings

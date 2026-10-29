@@ -1,7 +1,6 @@
 // Plans and writes new content entries for `pnpm new`. Planning (`planEntry`) is pure; only
-// `writeEntry`, `appendTag` and `listTemplates` touch the filesystem.
+// `writeEntry` and `listTemplates` touch the filesystem.
 import {
-  appendFileSync,
   copyFileSync,
   existsSync,
   mkdirSync,
@@ -10,9 +9,9 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
-import { loadTags, parseTags, postPath, TIME_ZONE } from '@ac/content';
+import { postPath, TIME_ZONE } from '@ac/content';
 import { slug } from 'github-slugger';
-import { Document, isScalar, parse, stringify } from 'yaml';
+import { Document, isScalar, parse } from 'yaml';
 
 export type EntryType = 'post' | 'til' | 'photos';
 
@@ -202,34 +201,4 @@ export function writeEntry(
     copyFileSync(source, join(dirname(plan.file), basename(source)));
   }
   writeFileSync(plan.file, `${plan.frontMatter}\n${body}`, { flag: 'wx' });
-}
-
-/** Appends a tag to `tags.yml`, leaving the existing text untouched. Refuses a duplicate slug. */
-export function appendTag(tagsFile: string, tag: { slug: string; name: string }): void {
-  const existing = loadTags(tagsFile);
-  if (existing.has(tag.slug)) throw new Error(`Tag "${tag.slug}" already exists in ${tagsFile}`);
-  const text = readFileSync(tagsFile, 'utf8');
-  const scalar = (value: string) => stringify(value, { lineWidth: 0 }).trimEnd();
-  const entry = `- slug: ${scalar(tag.slug)}\n  name: ${scalar(tag.name)}\n`;
-  const addition = text === '' || text.endsWith('\n') ? entry : `\n${entry}`;
-  // Check the result parses (and keeps the tag as given) before touching the file.
-  const parsed = parseTags(text + addition, tagsFile).get(tag.slug);
-  if (parsed?.name !== tag.name) throw new Error(`Tag "${tag.slug}" did not round-trip through YAML`);
-  appendFileSync(tagsFile, addition);
-}
-
-/**
- * The write step of `pnpm new`, run only after the last prompt. Checks that the entry is free
- * before touching anything, so a refused entry leaves `tags.yml` byte-identical; then appends any
- * new tags and writes the entry.
- */
-export function createEntry(
-  plan: EntryPlan,
-  template: { dir: string },
-  opts: { tagsFile: string; newTags?: { slug: string; name: string }[]; images?: string[] },
-): void {
-  const taken = conflicts(plan).find((path) => existsSync(path));
-  if (taken) throw new Error(`${taken} already exists; not overwriting it`);
-  for (const tag of opts.newTags ?? []) appendTag(opts.tagsFile, tag);
-  writeEntry(plan, template, opts.images ?? []);
 }

@@ -58,9 +58,9 @@ describe('checkEntry: clean entries', () => {
 
 describe('checkEntry: front-matter', () => {
   it('reports each schema issue on the line of its key', () => {
-    const file = post('Body.', { front: 'title: A draft\ndate: "2026-10-27T09:00:00-07:00"\ntags: [nope]' });
+    const file = post('Body.', { front: 'title: A draft\ndate: "2026-10-27T09:00:00-07:00"\ntags: ["++"]' });
     expect(checkEntry(file)).toEqual([
-      { rule: 'front-matter', line: 4, message: expect.stringContaining('Unknown tag "nope"') },
+      { rule: 'front-matter', line: 4, message: expect.stringContaining('Tag "++"') },
     ]);
   });
 

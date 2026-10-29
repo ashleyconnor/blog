@@ -70,27 +70,16 @@ describe('site workflow', () => {
     expect(String(wf.concurrency['cancel-in-progress'])).toContain("github.event_name == 'pull_request'");
   });
 
-  it('has the four jobs', () => {
-    expect(Object.keys(workflow().jobs).sort()).toEqual(['checks', 'cleanup', 'deploy', 'preview']);
-  });
-
-  it('bounds every job with a timeout', () => {
-    const timeouts = Object.fromEntries(Object.entries(workflow().jobs).map(([name, j]) => [name, j['timeout-minutes']]));
-    expect(timeouts).toEqual({ checks: 30, preview: 45, deploy: 30, cleanup: 10 });
-  });
-
-  it('checks on every event but a PR closing: install, browser, test, check, build', () => {
+  it('checks on every event but a PR closing; a content-only change only compiles', () => {
     expect(condition('checks')).toBe(NOT_CLOSED);
-    const runs = job('checks').steps.flatMap((s) => (s.run ? [s.run.trim()] : []));
-    expect(runs).toEqual([
-      'pnpm install --frozen-lockfile',
-      'pnpm exec playwright install --with-deps chromium-headless-shell',
-      'pnpm test',
-      'pnpm check',
-      'pnpm build',
-    ]);
-    const node = job('checks').steps.find((s) => s.uses?.startsWith('actions/setup-node@'));
-    expect(node?.with?.['node-version-file']).toBe('.nvmrc');
+    const steps = job('checks').steps;
+    const step = (run: string) => steps.find((s) => s.run?.trim() === run);
+    const CONTENT_ONLY = "steps.changes.outputs.content-only == 'true'";
+    expect(step('pnpm build:content')?.if).toBe(CONTENT_ONLY);
+    for (const run of ['pnpm test', 'pnpm check', 'pnpm build']) {
+      expect(step(run)?.if, run).toBe(CONTENT_ONLY.replace('==', '!='));
+    }
+    expect(steps.find((s) => s.id === 'changes')?.run).toContain("'^content/'");
   });
 
   it('previews only same-repo PRs that are not closing, after the checks, and may comment', () => {

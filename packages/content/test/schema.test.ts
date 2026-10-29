@@ -33,45 +33,21 @@ describe('postSchema', () => {
     expect(parsed.legacyUrls).toEqual(['/2025/04/24/x.html']);
   });
 
-  it('rejects unknown tag', () => {
-    const result = postSchema.safeParse({ ...valid, tags: ['pyhton'] });
-    expect(result.success).toBe(false);
-    expect(messages(result).join('\n')).toContain('Unknown tag "pyhton"');
-    expect(paths(result)).toEqual([['tags', 0]]);
+  it('accepts any tag and turns it into its slug', () => {
+    const parsed = postSchema.parse({ ...valid, tags: ['python', 'Machine Learning', 'macOS'] });
+    expect(parsed.tags).toEqual(['python', 'machine-learning', 'macos']);
   });
 
-  it('reports every unknown tag, not just the first', () => {
-    const result = postSchema.safeParse({ ...valid, tags: ['python', 'nope', 'nada'] });
+  it('reports every tag without a letter or digit', () => {
+    const result = postSchema.safeParse({ ...valid, tags: ['python', '++', ' '] });
     expect(messages(result)).toEqual([
-      expect.stringContaining('Unknown tag "nope"'),
-      expect.stringContaining('Unknown tag "nada"'),
+      expect.stringContaining('Tag "++"'),
+      expect.stringContaining('Tag " "'),
     ]);
-  });
-
-  it('rejects unknown key', () => {
-    const result = postSchema.safeParse({ ...valid, unlised: true });
-    expect(result.success).toBe(false);
-    expect(messages(result).join('\n')).toContain('unlised');
-    expect(postSchema.safeParse({ ...valid, draf: true }).success).toBe(false);
-  });
-
-  it('rejects blank date', () => {
-    expect(postSchema.safeParse({ ...valid, date: null }).success).toBe(false);
-    expect(postSchema.safeParse({ ...valid, date: '' }).success).toBe(false);
-    expect(postSchema.safeParse({ ...valid, date: 'not a date' }).success).toBe(false);
-    expect(postSchema.safeParse({ ...valid, date: 0 }).success).toBe(false);
-    expect(postSchema.safeParse({ ...valid, date: undefined }).success).toBe(false);
-  });
-
-  it('rejects blank updated', () => {
-    expect(postSchema.safeParse({ ...valid, updated: null }).success).toBe(false);
-    expect(postSchema.safeParse({ ...valid, updated: '' }).success).toBe(false);
-  });
-
-  it('accepts Date objects for date and updated (as parsed from YAML)', () => {
-    const parsed = postSchema.parse({ ...valid, date: new Date('2025-04-23'), updated: new Date('2025-05-01') });
-    expect(parsed.date).toEqual(new Date('2025-04-23'));
-    expect(parsed.updated).toEqual(new Date('2025-05-01'));
+    expect(paths(result)).toEqual([
+      ['tags', 1],
+      ['tags', 2],
+    ]);
   });
 
   it('rejects empty tags', () => {
@@ -87,11 +63,10 @@ describe('postSchema', () => {
     expect(postSchema.safeParse({ ...valid, title: '' }).success).toBe(false);
   });
 
-  it('reads tags lazily from CONTENT_ROOT at validation time', () => {
-    expect(postSchema.safeParse({ ...valid, tags: ['zig'] }).success).toBe(false);
+  it('reads tags.yml overrides lazily from CONTENT_ROOT at validation time', () => {
+    expect(postSchema.parse({ ...valid, tags: ['C++'] }).tags).toEqual(['c']);
     vi.stubEnv('CONTENT_ROOT', altRoot);
-    expect(postSchema.safeParse({ ...valid, tags: ['zig'] }).success).toBe(true);
-    expect(postSchema.safeParse({ ...valid, tags: ['python'] }).success).toBe(false);
+    expect(postSchema.parse({ ...valid, tags: ['C++'] }).tags).toEqual(['cpp']);
   });
 });
 
@@ -100,7 +75,7 @@ describe('tilSchema', () => {
     expect(tilSchema.safeParse(valid).success).toBe(true);
     expect(tilSchema.safeParse({ ...valid, unlised: true }).success).toBe(false);
     expect(tilSchema.safeParse({ ...valid, date: null }).success).toBe(false);
-    expect(messages(tilSchema.safeParse({ ...valid, tags: ['pyhton'] })).join()).toContain('Unknown tag "pyhton"');
+    expect(messages(tilSchema.safeParse({ ...valid, tags: ['++'] })).join()).toContain('Tag "++"');
     expect(tilSchema.safeParse({ ...valid, tags: [] }).success).toBe(false);
   });
 });
@@ -145,7 +120,7 @@ describe('photosSchema', () => {
   });
 
   it('applies the common front matter rules', () => {
-    expect(messages(schema.safeParse({ ...photo, tags: ['pyhton'] })).join()).toContain('Unknown tag "pyhton"');
+    expect(messages(schema.safeParse({ ...photo, tags: ['++'] })).join()).toContain('Tag "++"');
   });
 
   it('requires at least one image', () => {

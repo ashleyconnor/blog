@@ -1,5 +1,6 @@
-# Checks every change, previews same-repo PRs on Cloudflare (with a Lighthouse gate), removes the
-# previews when the PR closes, and deploys `main` to the `blog` and `til` Workers.
+# Checks every change (a content-only change just compiles), previews same-repo PRs on Cloudflare
+# (with a Lighthouse gate), removes the previews when the PR closes, and deploys `main` to the
+# `blog` and `til` Workers.
 #
 # The Cloudflare jobs need the CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repo secrets. Without
 # them they skip with a notice, so the workflow stays green until the secrets are added.
@@ -26,17 +27,44 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      # A change to `content/` alone (a new post, a typo fix) only needs to compile. Anything else
+      # (templates, packages, scripts, config) gets the full suite. With no base to compare against
+      # (a manual run, a new branch), everything runs.
+      - name: What changed
+        id: changes
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          changed=''
+          if [ -n "$BASE" ] && git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            changed=$(git diff --name-only "$BASE" HEAD)
+          fi
+          if [ -n "$changed" ] && ! grep -qv '^content/' <<< "$changed"; then
+            echo "::notice title=Content only::Only content/ changed, so only the sites are compiled."
+            echo "content-only=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "content-only=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Compile the content
+        if: steps.changes.outputs.content-only == 'true'
+        run: pnpm build:content
       # The blog build prints the resume PDF with Playwright.
-      - run: pnpm exec playwright install --with-deps chromium-headless-shell
-      - run: pnpm test
-      - run: pnpm check
-      - run: pnpm build
+      - if: steps.changes.outputs.content-only != 'true'
+        run: pnpm exec playwright install --with-deps chromium-headless-shell
+      - if: steps.changes.outputs.content-only != 'true'
+        run: pnpm test
+      - if: steps.changes.outputs.content-only != 'true'
+        run: pnpm check
+      - if: steps.changes.outputs.content-only != 'true'
+        run: pnpm build
 
   preview:
     if: >-
