@@ -111,7 +111,7 @@ function check(fn: () => unknown): string | undefined {
 async function main(argv: string[]): Promise<void> {
   // Loaded after the resolve hook is registered (see ts-resolve-hook.ts).
   const lib = await import('./lib/new-entry.ts');
-  const { contentRoot, loadTags } = await import('@ac/content');
+  const { contentRoot, loadTags, tagSlug } = await import('@ac/content');
 
   const { values } = parseArgs({
     args: argv,
@@ -126,8 +126,8 @@ async function main(argv: string[]): Promise<void> {
   });
 
   const root = contentRoot();
-  const tagsFile = join(root, 'tags.yml');
-  const known = loadTags(tagsFile);
+  // Tags already used by some entry, offered in the picker. Any other tag is fine too.
+  const known = loadTags(root);
   const templates = lib.listTemplates(TEMPLATES);
   const types = [...new Set(templates.map((template) => template.type))];
 
@@ -140,10 +140,8 @@ async function main(argv: string[]): Promise<void> {
   if (values.tags !== undefined) {
     tags = values.tags.split(',').map((tag) => tag.trim()).filter(Boolean);
     if (tags.length === 0) throw new Error('Give at least one tag');
-    const unknown = tags.find((tag) => !known.has(tag));
-    if (unknown) {
-      throw new Error(`Unknown tag "${unknown}"; known tags: ${[...known.keys()].join(', ')}`);
-    }
+    const blank = tags.find((tag) => !tagSlug(tag));
+    if (blank) throw new Error(`Tag "${blank}" needs at least one letter or digit`);
   }
   let images = values.images === undefined ? undefined : photoSources(values.images);
 
@@ -190,8 +188,8 @@ async function main(argv: string[]): Promise<void> {
     );
   }
 
-  // New tags are only collected here; they are appended to tags.yml after the last prompt.
-  const newTags: { slug: string; name: string }[] = [];
+  // A new tag goes into the front matter as typed; its slug defaults to kebab case.
+  const newTags: string[] = [];
   if (tags === undefined) {
     const chosen = await ask(
       prompts.multiselect<string | typeof ADD_TAG>({
@@ -211,18 +209,19 @@ async function main(argv: string[]): Promise<void> {
             message: 'New tag name',
             validate: (value) =>
               check(() => {
-                const slug = lib.slugify(value ?? '');
-                if (known.has(slug) || newTags.some((tag) => tag.slug === slug)) {
+                const slug = tagSlug(value ?? '');
+                if (!slug) throw new Error('Give a tag with at least one letter or digit');
+                if (known.has(slug) || newTags.some((tag) => tagSlug(tag) === slug)) {
                   throw new Error(`Tag "${slug}" already exists`);
                 }
               }),
           }),
         )
       ).trim();
-      newTags.push({ slug: lib.slugify(name), name });
+      newTags.push(name);
       more = await ask(prompts.confirm({ message: 'Add another new tag?', initialValue: false }));
     }
-    tags.push(...newTags.map((tag) => tag.slug));
+    tags.push(...newTags);
   }
 
   if (type === 'photos' && images === undefined) {
@@ -239,13 +238,12 @@ async function main(argv: string[]): Promise<void> {
   const template = templates.find((item) => item.type === type && item.advanced === advanced);
   if (!template) throw new Error(`No template for ${advanced ? 'an advanced ' : ''}${type}`);
   const plan = lib.planEntry({ type, title, tags, advanced, now: new Date(), root, images });
-  lib.createEntry(plan, template, { tagsFile, newTags, images });
+  lib.writeEntry(plan, template, images);
 
   const dev = devCommand(plan.url.app);
   const url = `http://localhost:${dev.port}${plan.url.path}`;
   if (interactive) prompts.outro(`Created ${plan.file}`);
   else console.log(`Created ${plan.file}`);
-  for (const tag of newTags) console.log(`Added tag "${tag.slug}" to ${tagsFile}`);
   console.log(`Draft URL: ${url}`);
   if (values['no-open']) return;
 

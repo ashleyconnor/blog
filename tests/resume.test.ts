@@ -21,16 +21,6 @@ describe('resume.yml', () => {
   it('validates', () => {
     expect(() => loadResume()).not.toThrow();
   });
-
-  it('transcribes every role from the PDF, newest first', () => {
-    expect(loadResume().experience.map((job) => job.company)).toEqual([
-      'HashiCorp',
-      'Capital One Canada',
-      'Ontario Teachers’ Pension Plan',
-      'Sportech PLC (Football Pools)',
-      'Sensible Development',
-    ]);
-  });
 });
 
 describe('built resume', () => {

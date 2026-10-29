@@ -133,12 +133,21 @@ describe('pnpm new', () => {
     expect(readFileSync(join(root, 'photos', 'relative', 'one.jpg'), 'utf8')).toBe('one');
   });
 
-  it('refuses an unknown tag and writes nothing', () => {
+  it('takes a tag no entry uses yet, writing it as typed and touching no tags.yml', () => {
+    const tagsYml = readFileSync(join(root, 'tags.yml'), 'utf8');
+    const { code, out } = run('--type', 'til', '--title', 'Anything', '--tags', 'tools,Machine Learning');
+    expect(code).toBe(0);
+    const data = frontMatter(created(out));
+    expect(data.tags).toEqual(['tools', 'Machine Learning']);
+    expect(tilSchema.parse(data).tags).toEqual(['tools', 'machine-learning']);
+    expect(readFileSync(join(root, 'tags.yml'), 'utf8')).toBe(tagsYml);
+  });
+
+  it('refuses a tag without a letter or digit and writes nothing', () => {
     const before = snapshot();
-    const { code, err } = run('--type', 'til', '--title', 'Anything', '--tags', 'tools,nope');
+    const { code, err } = run('--type', 'til', '--title', 'Anything', '--tags', 'tools,++');
     expect(code).not.toBe(0);
-    expect(err).toContain('Unknown tag "nope"');
-    expect(err).toContain('tools');
+    expect(err).toContain('Tag "++"');
     expect(snapshot()).toEqual(before);
   });
 

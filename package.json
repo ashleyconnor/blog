@@ -6,6 +6,7 @@
   "engines": { "node": ">=22.23.4" },
   "scripts": {
     "build": "pnpm -r --filter './apps/*' build",
+    "build:content": "pnpm -r --filter './apps/*' exec astro build",
     "test": "vitest run",
     "check": "pnpm -r --filter './apps/*' check",
     "lighthouse": "LIGHTHOUSE_PRESET=desktop lhci autorun && LIGHTHOUSE_PRESET=mobile lhci autorun",

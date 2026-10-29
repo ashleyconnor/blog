@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { loadItems } from '../packages/content/src/load-items';
+import { loadTags } from '../packages/content/src/tags';
 
 const root = join(import.meta.dirname, '..');
 const fixtures = join(root, 'tests/fixtures/content');
@@ -303,9 +304,10 @@ describe('tags', () => {
     expect(rows(html).map((r) => r.type)).toEqual(['post', 'til']);
   });
 
-  it('every tag in tags.yml has a page, so tag links on unlisted posts never 404', () => {
-    const tags = [...file(fixtures, 'tags.yml').matchAll(/slug: (\S+)/g)].map(([, slug]) => slug);
-    for (const tag of tags) expect(existsSync(join(dist, 'tags', tag!, 'index.html')), tag).toBe(true);
+  it('every tag an entry uses has a page, so tag links on unlisted posts never 404', () => {
+    const tags = [...loadTags(fixtures).keys()];
+    expect(tags).toContain('rails'); // only on the unlisted post
+    for (const tag of tags) expect(existsSync(join(dist, 'tags', tag, 'index.html')), tag).toBe(true);
     // `travel` only has the unlisted post and the photos: the page exists but lists only photos.
     expect(rows(page(dist, 'tags/travel')).map((r) => r.type)).toEqual(['photos']);
   });

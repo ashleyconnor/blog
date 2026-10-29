@@ -2,9 +2,10 @@ import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { contentRoot, loadTags, parseTags } from '../src/tags';
+import { contentRoot, loadTagOverrides, loadTags, parseTags, resolveTag, tagSlug } from '../src/tags';
 
 const repoRoot = resolve(import.meta.dirname, '../../..');
+const fixtures = resolve(repoRoot, 'tests/fixtures/content');
 const originalCwd = process.cwd();
 
 afterEach(() => {
@@ -41,14 +42,13 @@ describe('contentRoot and loadTags from an app directory', () => {
     vi.stubEnv('CONTENT_ROOT', undefined);
     process.chdir(resolve(repoRoot, 'apps/blog'));
     expect(contentRoot()).toBe(resolve(repoRoot, 'content'));
-    expect(loadTags().get('python')).toEqual({ slug: 'python', name: 'Python' });
   });
 
   it('resolves a relative CONTENT_ROOT against the repo root when the cwd is apps/blog', () => {
     vi.stubEnv('CONTENT_ROOT', 'tests/fixtures/content');
     process.chdir(resolve(repoRoot, 'apps/blog'));
-    expect(contentRoot()).toBe(resolve(repoRoot, 'tests/fixtures/content'));
-    expect(loadTags().size).toBe(12);
+    expect(contentRoot()).toBe(fixtures);
+    expect(loadTags().get('python')).toEqual({ slug: 'python', name: 'Python' });
   });
 
   it('finds the root from a nested directory of a package', () => {
@@ -84,26 +84,62 @@ describe('contentRoot and loadTags from an app directory', () => {
   });
 });
 
-describe('loadTags', () => {
-  it('loads <contentRoot>/tags.yml by default', () => {
-    vi.stubEnv('CONTENT_ROOT', resolve(import.meta.dirname, 'fixtures/alt-content'));
-    expect([...loadTags().entries()]).toEqual([['zig', { slug: 'zig', name: 'Zig' }]]);
+describe('tagSlug', () => {
+  it('is lowercase kebab case', () => {
+    expect(tagSlug('python')).toBe('python');
+    expect(tagSlug('Machine Learning')).toBe('machine-learning');
+    expect(tagSlug('  macOS ')).toBe('macos');
+    expect(tagSlug('Café & Bar')).toBe('cafe-bar');
+    expect(tagSlug('++')).toBe('');
+  });
+});
+
+describe('resolveTag', () => {
+  const overrides = parseTags('- slug: cpp\n  name: C++\n- slug: macos\n  name: macOS\n', 'inline');
+
+  it('defaults the slug to kebab case and the name to the value as written', () => {
+    expect(resolveTag('Machine Learning', overrides)).toEqual({ slug: 'machine-learning', name: 'Machine Learning' });
   });
 
-  it('loads the real tag list when CONTENT_ROOT is unset', () => {
-    vi.stubEnv('CONTENT_ROOT', undefined);
-    const tags = loadTags();
-    expect(tags.size).toBe(12);
+  it('uses an override matched by slug or by name, ignoring case', () => {
+    expect(resolveTag('macos', overrides)).toEqual({ slug: 'macos', name: 'macOS' });
+    expect(resolveTag('MacOS', overrides)).toEqual({ slug: 'macos', name: 'macOS' });
+    expect(resolveTag('C++', overrides)).toEqual({ slug: 'cpp', name: 'C++' });
+    expect(resolveTag('cpp', overrides)).toEqual({ slug: 'cpp', name: 'C++' });
+  });
+});
+
+describe('loadTagOverrides', () => {
+  it('loads <contentRoot>/tags.yml by default', () => {
+    vi.stubEnv('CONTENT_ROOT', resolve(import.meta.dirname, 'fixtures/alt-content'));
+    expect([...loadTagOverrides().entries()]).toEqual([['cpp', { slug: 'cpp', name: 'C++' }]]);
+  });
+
+  it('treats a missing file as no overrides', () => {
+    expect(loadTagOverrides('/nonexistent/tags.yml').size).toBe(0);
+  });
+});
+
+describe('loadTags', () => {
+  it('collects every tag the entries use, named by tags.yml where it overrides', () => {
+    const tags = loadTags(fixtures);
+    expect([...tags.keys()].sort()).toEqual(['elixir', 'macos', 'python', 'rails', 'tools', 'travel']);
     expect(tags.get('macos')).toEqual({ slug: 'macos', name: 'macOS' });
   });
 
-  it('loads an explicit path', () => {
-    const tags = loadTags(resolve(repoRoot, 'tests/fixtures/content/tags.yml'));
-    expect(tags.get('python')).toEqual({ slug: 'python', name: 'Python' });
-  });
-
-  it('throws when the file does not exist', () => {
-    expect(() => loadTags('/nonexistent/tags.yml')).toThrow(/tags\.yml/);
+  it('picks up a new tag without a tags.yml entry, and needs no tags.yml at all', () => {
+    const root = realpathSync(mkdtempSync(join(tmpdir(), 'ac-tags-')));
+    try {
+      mkdirSync(join(root, 'til'));
+      writeFileSync(join(root, 'til/a.md'), '---\ntitle: A\ntags: [Machine Learning, python]\n---\nBody\n');
+      writeFileSync(join(root, 'til/b.md'), '---\ntitle: [unclosed\n---\n');
+      expect([...loadTags(root).values()]).toEqual([
+        { slug: 'machine-learning', name: 'Machine Learning' },
+        { slug: 'python', name: 'python' },
+      ]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });
 
