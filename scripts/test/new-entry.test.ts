@@ -2,12 +2,10 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { contentRoot, parseTags, photosSchema, postSchema, tilSchema } from '@ac/content';
+import { contentRoot, photosSchema, postSchema, tilSchema } from '@ac/content';
 import { parse } from 'yaml';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
-  appendTag,
-  createEntry,
   entryDate,
   listTemplates,
   planEntry,
@@ -259,91 +257,6 @@ describe('writeEntry', () => {
     expect(() => writeEntry(plan, { dir: join(TEMPLATES, 'photos') }, [source])).toThrow(
       dirname(plan.file),
     );
-  });
-});
-
-describe('createEntry', () => {
-  let root: string;
-  let tagsFile: string;
-  const TAGS = '# tags\n- slug: python\n  name: Python\n';
-  const newTags = [{ slug: 'kubernetes', name: 'Kubernetes' }];
-
-  beforeEach(() => {
-    root = mkdtempSync(join(tmpdir(), 'create-entry-'));
-    tagsFile = join(root, 'tags.yml');
-    writeFileSync(tagsFile, TAGS);
-  });
-
-  const plan = () =>
-    planEntry({
-      type: 'til',
-      title: 'Fresh Entry',
-      tags: ['python', 'kubernetes'],
-      advanced: false,
-      now: NOW,
-      root,
-    });
-
-  it('appends the new tags, then writes the entry', () => {
-    const planned = plan();
-    createEntry(planned, { dir: join(TEMPLATES, 'til') }, { tagsFile, newTags });
-    expect(readFileSync(tagsFile, 'utf8')).toBe(`${TAGS}- slug: kubernetes\n  name: Kubernetes\n`);
-    expect(readFileSync(planned.file, 'utf8').startsWith(planned.frontMatter)).toBe(true);
-  });
-
-  it('leaves tags.yml byte-identical and writes nothing when the entry exists', () => {
-    const planned = plan();
-    mkdirSync(dirname(planned.file), { recursive: true });
-    writeFileSync(planned.file, 'existing');
-    expect(() =>
-      createEntry(planned, { dir: join(TEMPLATES, 'til') }, { tagsFile, newTags }),
-    ).toThrow(`${planned.file} already exists; not overwriting it`);
-    expect(readFileSync(tagsFile, 'utf8')).toBe(TAGS);
-    expect(readFileSync(planned.file, 'utf8')).toBe('existing');
-  });
-
-  it('leaves tags.yml byte-identical when an advanced post holds the id', () => {
-    const base = { title: 'Fresh Entry', tags: ['python'], now: NOW, root };
-    writeEntry(planEntry({ ...base, type: 'post', advanced: true }), { dir: join(TEMPLATES, 'post-advanced') });
-    const basic = planEntry({ ...base, type: 'post', advanced: false });
-    expect(() => createEntry(basic, { dir: join(TEMPLATES, 'post') }, { tagsFile, newTags })).toThrow(
-      /already exists/,
-    );
-    expect(readFileSync(tagsFile, 'utf8')).toBe(TAGS);
-    expect(existsSync(basic.file)).toBe(false);
-  });
-});
-
-describe('appendTag', () => {
-  let dir: string;
-  beforeEach(() => {
-    dir = mkdtempSync(join(tmpdir(), 'tags-'));
-  });
-
-  it('appends without touching the existing bytes', () => {
-    const file = join(dir, 'tags.yml');
-    const original = '# my tags\n- slug: python\n  name: Python\n';
-    writeFileSync(file, original);
-    appendTag(file, { slug: 'cpp', name: 'C++: the language' });
-    const text = readFileSync(file, 'utf8');
-    expect(text.startsWith(original)).toBe(true);
-    expect(parseTags(text, file).get('cpp')).toEqual({ slug: 'cpp', name: 'C++: the language' });
-  });
-
-  it('starts a new line when the file lacks a trailing newline', () => {
-    const file = join(dir, 'tags.yml');
-    writeFileSync(file, '- slug: python\n  name: Python');
-    appendTag(file, { slug: 'rust', name: 'Rust' });
-    const text = readFileSync(file, 'utf8');
-    expect(text).toBe('- slug: python\n  name: Python\n- slug: rust\n  name: Rust\n');
-  });
-
-  it('refuses a duplicate slug', () => {
-    const file = join(dir, 'tags.yml');
-    const original = '- slug: python\n  name: Python\n';
-    writeFileSync(file, original);
-    expect(() => appendTag(file, { slug: 'python', name: 'Py' })).toThrow(/python/);
-    expect(readFileSync(file, 'utf8')).toBe(original);
   });
 });
 

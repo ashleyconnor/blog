@@ -24,3 +24,5 @@
   name: Travel
 - slug: foo
   name: foo
+- slug: synology
+  name: Synology
