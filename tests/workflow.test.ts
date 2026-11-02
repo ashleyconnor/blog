@@ -82,6 +82,18 @@ describe('site workflow', () => {
     expect(steps.find((s) => s.id === 'changes')?.run).toContain("'^content/'");
   });
 
+  it('skips Lighthouse on a content-only change, but still previews it', () => {
+    expect(job('checks') as Job & { outputs?: Record<string, string> }).toMatchObject({
+      outputs: { 'content-only': '${{ steps.changes.outputs.content-only }}' },
+    });
+    const steps = job('preview').steps;
+    const lighthouse = steps.filter((s) => s.run === 'pnpm lighthouse' || s.uses?.startsWith('actions/upload-artifact@'));
+    expect(lighthouse).toHaveLength(2);
+    for (const step of lighthouse) expect(step.if).toContain("needs.checks.outputs.content-only != 'true'");
+    const upload = steps.find((s) => s.id === 'upload');
+    expect(upload?.if).not.toContain('content-only');
+  });
+
   it('previews only same-repo PRs that are not closing, after the checks, and may comment', () => {
     const preview = job('preview');
     expect(condition('preview')).toContain("github.event_name == 'pull_request'");
