@@ -136,6 +136,65 @@ describe('table of contents', () => {
   });
 });
 
+describe('fallback fonts', () => {
+  const unquote = (s: string) => s.trim().replace(/^["']|["']$/g, '');
+
+  /** Every `@font-face` the page ships, as its family, weight range and size/metric overrides. */
+  function fontFaces(css: string) {
+    return [...css.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((m) => {
+      const props = Object.fromEntries(
+        m[1]
+          .split(';')
+          .map((d) => d.split(/:(.*)/s))
+          .filter(([k, v]) => k && v)
+          .map(([k, v]) => [k.trim(), v.trim()]),
+      );
+      const [min, max = min] = String(props['font-weight']).split(/\s+/).map(Number);
+      const overrides = Object.fromEntries(
+        ['size-adjust', 'ascent-override', 'descent-override', 'line-gap-override']
+          .filter((k) => k in props)
+          .map((k) => [k, Number.parseFloat(props[k])]),
+      );
+      return { family: unquote(props['font-family']), min, max, overrides };
+    });
+  }
+
+  it("gives every Arial or Courier New fallback face a Liberation twin with the same metrics", () => {
+    const faces = fontFaces(allCss(page(dist, BASIC)));
+    const astro = faces.flatMap((f) => {
+      const m = f.family.match(/^(.+)-[0-9a-f]+ fallback: (?:Arial|Arial Bold|Courier New)$/);
+      return m ? [{ ...f, name: m[1] }] : [];
+    });
+    expect(new Set(astro.map((f) => f.name))).toEqual(new Set(['Space Grotesk', 'Inter', 'JetBrains Mono']));
+
+    for (const face of astro) {
+      const twin = faces.find(
+        (f) => f.family === `${face.name} Liberation fallback` && f.min <= face.min && face.min <= f.max,
+      );
+      expect(twin, `${face.family} ${face.min}`).toBeDefined();
+      expect(Object.keys(twin!.overrides).sort(), face.family).toEqual(Object.keys(face.overrides).sort());
+      // The minifier rounds the copied values to six significant figures.
+      for (const [key, value] of Object.entries(face.overrides)) {
+        expect(twin!.overrides[key], `${face.family} ${face.min} ${key}`).toBeCloseTo(value, 2);
+      }
+    }
+  });
+
+  it('puts each Liberation face after Astro’s fallbacks and before the system fonts', () => {
+    const html = page(dist, BASIC);
+    for (const [variable, name, generic] of [
+      ['--font-space-grotesk', 'Space Grotesk', 'system-ui'],
+      ['--font-inter', 'Inter', 'system-ui'],
+      ['--font-jetbrains-mono', 'JetBrains Mono', 'ui-monospace'],
+    ]) {
+      const stack = html.match(new RegExp(`${variable}:([^;}]*)`))?.[1].split(',').map(unquote) ?? [];
+      const twin = stack.indexOf(`${name} Liberation fallback`);
+      expect(twin, variable).toBeGreaterThan(stack.findIndex((f) => f.includes(' fallback: ')));
+      expect(stack.indexOf(generic), variable).toBe(twin + 1);
+    }
+  });
+});
+
 describe('layout', () => {
   it('declares a dark colour scheme, canonical and social tags', () => {
     const html = page(dist, BASIC);

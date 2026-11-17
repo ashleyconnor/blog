@@ -1,0 +1,57 @@
+/*
+ * Fallback faces for Linux, named in each family's `fallbacks` (see fonts.ts).
+ *
+ * Astro sizes one fallback face per family to the web font's metrics, so text does not move when the
+ * web font swaps in, but it builds that face from `local("Arial")` or `local("Courier New")`. Linux
+ * has neither, so text would first render in an unadjusted system font and then shift (Lighthouse
+ * measured a CLS of 0.13 on mobile). Liberation Sans and Liberation Mono (Arimo and Cousine on
+ * ChromeOS) have the same metrics as Arial and Courier New, so each face here copies the overrides of
+ * Astro's face for the same family and weight. tests/ui.test.ts fails if the two drift apart.
+ */
+
+@font-face {
+  font-family: 'Space Grotesk Liberation fallback';
+  src: local('Liberation Sans'), local('Arimo');
+  font-display: swap;
+  font-weight: 500;
+  font-style: normal;
+  size-adjust: 109.9146%;
+  ascent-override: 89.5241%;
+  descent-override: 26.5661%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Space Grotesk Liberation fallback';
+  src: local('Liberation Sans Bold'), local('Arimo Bold');
+  font-display: swap;
+  font-weight: 700;
+  font-style: normal;
+  size-adjust: 102.0875%;
+  ascent-override: 96.3879%;
+  descent-override: 28.6029%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Inter Liberation fallback';
+  src: local('Liberation Sans'), local('Arimo');
+  font-display: swap;
+  font-weight: 400 600;
+  font-style: normal;
+  size-adjust: 107.1194%;
+  ascent-override: 90.4365%;
+  descent-override: 22.518%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono Liberation fallback';
+  src: local('Liberation Mono'), local('Cousine');
+  font-display: swap;
+  font-weight: 400 500;
+  font-style: normal;
+  size-adjust: 99.9837%;
+  ascent-override: 102.0166%;
+  descent-override: 30.0049%;
+}

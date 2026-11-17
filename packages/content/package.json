@@ -14,13 +14,13 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "astro": "7.4.2",
+    "astro": "7.4.7",
     "github-slugger": "2.0.0",
     "tinyglobby": "0.2.17",
     "yaml": "2.9.1"
   },
   "devDependencies": {
-    "@types/node": "24.19.2",
+    "@types/node": "26.6.6",
     "typescript": "^6.0.3"
   }
 }

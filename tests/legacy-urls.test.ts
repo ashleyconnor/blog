@@ -196,7 +196,9 @@ describe('legacy images', () => {
       expect({ exif, xmp, iptc, comments }, path).toEqual({});
       expect(await gpsOf(file), path).toBeUndefined();
       // exifr reads EXIF from JPEG and PNG directly; a PNG's IHDR (its size and bit depth) is not metadata.
-      expect(await exifr.parse(file, { ihdr: false }), path).toBeUndefined();
+      // It gets the bytes, not the path: exifr 7.1.3 opens files with a FileHandle.stat() call that
+      // Node 26 rejects.
+      expect(await exifr.parse(readFileSync(file), { ihdr: false }), path).toBeUndefined();
     }
   });
 
