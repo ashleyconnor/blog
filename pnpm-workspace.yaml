@@ -5,3 +5,8 @@ packages:
 allowBuilds:
   esbuild: true
   workerd: true
+# Keep @emnapi on 1.x. astro 7.4.7's dependencies accept a 2.0 beta of @emnapi/runtime, and pnpm
+# paired it with @emnapi/core 1.x under @astrojs/check, which then fails to load and breaks `astro check`.
+overrides:
+  '@emnapi/core': 1.11.3
+  '@emnapi/runtime': 1.11.3
