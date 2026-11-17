@@ -10,3 +10,7 @@ allowBuilds:
 overrides:
   '@emnapi/core': 1.11.3
   '@emnapi/runtime': 1.11.3
+  # One Node types version, matching the Node in .nvmrc, for every package that peers on it.
+  '@types/node': 26.6.6
+# Refuse to install on any Node but the one in package.json `engines` (and .nvmrc, which CI reads).
+engineStrict: true
